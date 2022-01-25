@@ -7,10 +7,15 @@
 </head>
 <body>
 	<button id="button">Run Test (See console)</button>
+	<div id="container"></div>
 	<script type="module">
 		import Module from './geometry.js';
+		import * as THREE from './three.module.js';
+		import { OrbitControls } from './OrbitControls.js';
 
 		let moduleInstance = Module;
+
+		var scene, camera, renderer, width, height;
 
 		class Allocator {
 			constructor() {
@@ -56,7 +61,7 @@
 				dimsTypedArray.byteOffset,
 				potentialTypedArray.byteOffset,
 				shiftTypedArray.byteOffset,
-				shiftTypedArray.byteOffset
+				scaleTypedArray.byteOffset
 			);
 
 			allocator.freeAll();
@@ -78,9 +83,9 @@
 
 		document.getElementById('button').addEventListener('click', () => {
 			// var result = Module.ccall('doMarchingingCubes', null, null, null);
-			const dims = [2, 2, 2];
-			const potential = [1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0];
-			const shift = [1.0, 1.0, 1.0];
+			const dims = [3, 2, 2];
+			const potential = [1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0];
+			const shift = [0, 0, 0];
 			const scale = [1.0, 1.0, 1.0];
 
 			const output = marchingCubes(dims, potential, shift, scale);
@@ -89,9 +94,49 @@
 			console.log(">>> face count: ", output.faceCount);
 			console.log(">>> positions: ", output.positions);
 			console.log(">>> faces: ", output.faces);
+
+			// let tempPositions = [0.500000, 0.000000, 0.000000, 0.500000, 1.000000, 0.000000, 0.500000, 0.000000, 1.000000, 0.500000, 1.000000, 1.000000, 0.000000, 0.000000, 0.500000, 1.000000, 0.000000, 0.500000, 1.000000, 1.000000, 0.500000, 0.000000, 1.000000, 0.500000, 1.500000, 0.000000, 0.000000, 1.500000, 1.000000, 0.000000, 1.500000, 0.000000, 1.000000, 1.500000, 1.000000, 1.000000, 1.000000, 0.000000, 0.500000, 2.000000, 0.000000, 0.500000, 2.000000, 1.000000, 0.500000, 1.000000, 1.000000, 0.500000];
+			// let tempFaces = [0, 4, 1, 1, 4, 7, 2, 5, 6, 2, 6, 3, 10, 15, 12, 10, 11, 15, 8, 9, 13, 9, 14, 13];
+
+			let geometry = new THREE.BufferGeometry();
+			geometry.setIndex([...output.faces]);
+			geometry.setAttribute('position', new THREE.Float32BufferAttribute(output.positions, 3));
+
+			scene.add(new THREE.Mesh(
+				geometry, new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide, wireframe: false })
+			));
+
+			scene.add(new THREE.Mesh(
+				geometry, new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, wireframe: true })
+			));
 		});
 
+		width = 1024;
+		height = 768;
 
+		scene = new THREE.Scene();
+
+		camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 500);
+		camera.position.set(0, 0, 20);
+
+		var container = document.getElementById( 'container' );
+
+		renderer = new THREE.WebGLRenderer({ antialias: true });
+		renderer.setPixelRatio( window.devicePixelRatio );
+		renderer.setSize(width, height);
+
+		container.appendChild(renderer.domElement);
+
+		renderer.setAnimationLoop(() => {
+			renderer.render(scene, camera);
+		});
+
+		var box = new THREE.Mesh(
+			new THREE.BoxGeometry(1, 1), new THREE.MeshBasicMaterial({ color: 0x0000ff, wireframe: true })
+		);
+		scene.add(box);
+
+		var controls = new OrbitControls(camera, renderer.domElement);
 	</script>
 </body>
 </html>
