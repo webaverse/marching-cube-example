@@ -1,4 +1,4 @@
 {
-    "name": "marching-cube-examplge",
-    "start": "index.js"
+    "name": "marching-cube-example",
+    "start_url": "index.js"
 }
