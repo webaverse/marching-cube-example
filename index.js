@@ -30,7 +30,7 @@ export default () => {
   const output = physics.marchingCubes(dims, potential, shift, scale);
 
   let geometry = new THREE.BufferGeometry();
-  geometry.setIndex([...output.faces]);
+  geometry.setIndex(output.faces);
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(output.positions, 3));
 
   rootScene.add(new THREE.Mesh(
