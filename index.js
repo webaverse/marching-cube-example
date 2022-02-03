@@ -5,11 +5,7 @@ const {useFrame, useLocalPlayer, useCleanup, useMaterials, usePhysics, useGeomet
 
 export default () => {
 
-  const physics = usePhysics();
-
   const geometryUtils = useGeometryUtils();
-
-  geometryUtils.test();
 
   const rootScene = new THREE.Object3D();
 
