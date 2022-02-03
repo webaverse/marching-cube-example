@@ -1,11 +1,15 @@
 import * as THREE from 'three';
 import metaversefile from 'metaversefile';
 
-const {useFrame, useLocalPlayer, useCleanup, useMaterials, usePhysics} = metaversefile;
+const {useFrame, useLocalPlayer, useCleanup, useMaterials, usePhysics, useGeometryUtils} = metaversefile;
 
 export default () => {
 
   const physics = usePhysics();
+
+  const geometryUtils = useGeometryUtils();
+
+  geometryUtils.test();
 
   const rootScene = new THREE.Object3D();
 
@@ -27,7 +31,7 @@ export default () => {
     }
   }
 
-  const output = physics.marchingCubes(dims, potential, shift, scale);
+  const output = geometryUtils.marchingCubes(dims, potential, shift, scale);
 
   let geometry = new THREE.BufferGeometry();
   geometry.setIndex(new THREE.Uint16BufferAttribute(output.faces, 1));
