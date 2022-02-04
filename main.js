@@ -21,6 +21,12 @@ function init() {
   });
   app.append(renderer.domElement);
   const terrain = new Terrain();
+  terrain.updateView(new THREE.Vector3());
+
+  controls.addEventListener('change', (ev) => {
+    terrain.updateView(ev.target.object.position)
+  })
+
   scene.add(terrain);
   scene.add(new THREE.Mesh(new THREE.BoxBufferGeometry(5, 100, 5), new THREE.MeshBasicMaterial({ color: 0xafaf00 })));
   scene.add(new THREE.AxesHelper(10000));

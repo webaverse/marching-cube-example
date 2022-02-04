@@ -6,11 +6,14 @@ const _v2 = new THREE.Vector3;
 
 const isoLevel = 0;
 
-export default class Chunck extends THREE.Mesh {
-    constructor(origin, chunkSize) {
+export default class Chunk extends THREE.Mesh {
+    constructor(origin, chunkSize, level, x, z) {
         super();
+        this.level = level;
+        this.x = x;
+        this.z = z;
+        this.uid = `${x}_${z}`;
         this.spacing = 1;
-        this.boundsSize = 100; //一块chunk的高宽
         this.points = {};
         this.vertices = [];
         this.segment = 32; //分段
@@ -20,8 +23,21 @@ export default class Chunck extends THREE.Mesh {
         this.boundsSize = chunkSize;
         this.unitSize = this.boundsSize / this.segment;
         this.material = new THREE.MeshPhysicalMaterial({ color: 0xaaaaaa, wireframe: false });
+        this.max = new THREE.Vector4(-10000, -10000, -10000, -10000);
+        this.min = new THREE.Vector4(+10000, +10000, +10000, +10000);
+        
         this.build();
     }
+    updateXZ(chunkSize, x, z, px, pz) {
+        this.boundsSize = chunkSize
+        this.x = x;
+        this.z = z;
+        this.origin.x = px;
+        this.origin.z = pz;
+        this.uid = `${x}_${z}`;
+        this.build();
+    }
+
     interpolateVerts(v1, v2) {
         const t = (isoLevel - v1.w) / (v2.w - v1.w);
         _v1.set(v1.x, v1.y, v1.z);
@@ -71,6 +87,8 @@ export default class Chunck extends THREE.Mesh {
         }
         var index = this.indexFromCoord(vec.x, vec.y, vec.z);
         this.points[index] = new THREE.Vector4(curPos.x, curPos.y - 40, curPos.z, finalVal);
+        this.min.min(this.points[index]);
+        this.max.max(this.points[index]);
     }
     build() {
         this.vertices = [];
@@ -99,8 +117,9 @@ export default class Chunck extends THREE.Mesh {
         const vf = new THREE.Float32BufferAttribute(vs, 3);
         this.geometry.setAttribute('position', vf);
         this.geometry.setIndex(new THREE.Uint32BufferAttribute(index, 1));
-        this.geometry.computeVertexNormals();
+
         this.geometry = this.geometry.toNonIndexed();
+        this.geometry.computeVertexNormals();
     }
     indexFromCoord(x, y, z) {
         const seg = this.segment + 1;
