@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import Perlin from './perlin.js'
 import * as mc from './mc.js'
+import { terrainMaterial } from './material.js';
 const _v1 = new THREE.Vector3;
 const _v2 = new THREE.Vector3;
 
@@ -22,10 +23,10 @@ export default class Chunk extends THREE.Mesh {
         this.origin.copy(origin);
         this.boundsSize = chunkSize;
         this.unitSize = this.boundsSize / this.segment;
-        this.material = new THREE.MeshPhysicalMaterial({ color: 0xaaaaaa, wireframe: false });
+        this.material = terrainMaterial;
         this.max = new THREE.Vector4(-10000, -10000, -10000, -10000);
         this.min = new THREE.Vector4(+10000, +10000, +10000, +10000);
-        
+
         this.build();
     }
     updateXZ(chunkSize, x, z, px, pz) {
