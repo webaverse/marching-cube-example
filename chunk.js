@@ -16,7 +16,6 @@ export default class Chunk extends THREE.Mesh {
         this.uid = `${x}_${z}`;
         this.spacing = 1;
         this.points = {};
-        this.vertices = [];
         this.segment = 32; //分段
         this.origin = new THREE.Vector3;
         this.ID = '';
@@ -26,6 +25,10 @@ export default class Chunk extends THREE.Mesh {
         this.material = terrainMaterial;
         this.max = new THREE.Vector4(-10000, -10000, -10000, -10000);
         this.min = new THREE.Vector4(+10000, +10000, +10000, +10000);
+        this.vertexDic = {};
+        this.vertexs = [];
+        this.index = 0;
+        this.indexs = [];
 
         this.build();
     }
@@ -92,8 +95,12 @@ export default class Chunk extends THREE.Mesh {
         this.max.max(this.points[index]);
     }
     build() {
-        this.vertices = [];
+        this.vertexDic = {};
         this.points = [];
+        this.vertexs = [];
+        this.index = 0;
+        this.indexs = [];
+
         for (let i = 0; i <= this.segment; i++) {
             for (let j = 0; j <= this.segment; j++) {
                 for (let k = 0; k <= this.segment; k++) {
@@ -109,18 +116,16 @@ export default class Chunk extends THREE.Mesh {
             }
         }
         const vs = [];
-        const index = [];
-        for (let i = 0; i < this.vertices.length; i++) {
-            const p = this.vertices[i];
+        for (let i = 0; i < this.vertexs.length; i++) {
+            const p = this.vertexs[i];
             vs.push(p.x, p.y, p.z);
-            index.push(i);
         }
         const vf = new THREE.Float32BufferAttribute(vs, 3);
         this.geometry.setAttribute('position', vf);
-        this.geometry.setIndex(new THREE.Uint32BufferAttribute(index, 1));
-
-        this.geometry = this.geometry.toNonIndexed();
+        this.geometry.setIndex(new THREE.Uint32BufferAttribute(this.indexs, 1));
         this.geometry.computeVertexNormals();
+
+        // this.physicalgeometry = this.geometry.toNonIndexed();
     }
     indexFromCoord(x, y, z) {
         const seg = this.segment + 1;
@@ -139,6 +144,17 @@ export default class Chunk extends THREE.Mesh {
             this.points[this.indexFromCoord(vec.x + 1, vec.y + 1, vec.z)],
             this.points[this.indexFromCoord(vec.x + 1, vec.y + 1, vec.z + 1)],
             this.points[this.indexFromCoord(vec.x, vec.y + 1, vec.z + 1)]
+        ];
+
+        const indices = [
+            this.indexFromCoord(vec.x, vec.y, vec.z),
+            this.indexFromCoord(vec.x + 1, vec.y, vec.z),
+            this.indexFromCoord(vec.x + 1, vec.y, vec.z + 1),
+            this.indexFromCoord(vec.x, vec.y, vec.z + 1),
+            this.indexFromCoord(vec.x, vec.y + 1, vec.z),
+            this.indexFromCoord(vec.x + 1, vec.y + 1, vec.z),
+            this.indexFromCoord(vec.x + 1, vec.y + 1, vec.z + 1),
+            this.indexFromCoord(vec.x, vec.y + 1, vec.z + 1)
         ];
         // Calculate unique index for each cube configuration.
         // There are 256 possible values
@@ -173,10 +189,58 @@ export default class Chunk extends THREE.Mesh {
             const b1 = mc.cornerIndexBFromEdge[mc.triangulation[cubeIndex][i + 1]];
             const a2 = mc.cornerIndexAFromEdge[mc.triangulation[cubeIndex][i + 2]];
             const b2 = mc.cornerIndexBFromEdge[mc.triangulation[cubeIndex][i + 2]];
-            const vA = this.interpolateVerts(cubeCorners[a0], cubeCorners[b0]);
-            const vB = this.interpolateVerts(cubeCorners[a1], cubeCorners[b1]);
-            const vC = this.interpolateVerts(cubeCorners[a2], cubeCorners[b2]);
-            this.vertices.push(vA, vC, vB);
+
+            const segs = [[a0, b0], [a2, b2], [a1, b1]]
+            const vs = segs.map(v => {
+                const vInx = [indices[v[0]], indices[v[1]]].sort((a, b) => a - b).join("_")
+                let vP;
+                if (this.vertexDic[vInx]) {
+                    vP = this.vertexDic[vInx];
+                } else {
+                    vP = this.interpolateVerts(cubeCorners[v[0]], cubeCorners[v[1]]);
+                    vP.index = this.index++;
+                    this.vertexDic[vInx] = vP;
+                    this.vertexs.push(vP);
+                }
+                return vP.index;
+            })
+            this.indexs.push(...vs);
+            // const vAInx = [indices[a0], indices[b0]].sort((a, b) => a - b).join("_")
+            // let vA, vB, vC;
+            // if (this.vertexDic[vAInx]) {
+            //     vA = this.vertexDic[vAInx]; 
+            // } else {
+            //     vA = this.interpolateVerts(cubeCorners[a0], cubeCorners[b0]);
+            //     vA.index = this.index++;
+            //     this.vertexDic[vAInx] = vA;
+            //     this.vertexs.push(vA);
+            // }
+
+            // const vBInx = [indices[a1], indices[b1]].sort((a, b) => a - b).join("_")
+            // if (this.vertexDic[vBInx]) {
+            //     vB = this.vertexDic[vBInx]; 
+            // } else {
+            //     vB = this.interpolateVerts(cubeCorners[a1], cubeCorners[b1]);
+            //     vB.index = this.index++;
+            //     this.vertexDic[vBInx] = vB;
+            //     this.vertexs.push(vB);
+            // }
+
+            // const vCInx = [indices[a2], indices[b2]].sort((a, b) => a - b).join("_")
+            // if (this.vertexDic[vCInx]) {
+            //     vC = this.vertexDic[vCInx];
+            // } else {
+            //     vC = this.interpolateVerts(cubeCorners[a2], cubeCorners[b2]);
+            //     vC.index = this.index++;
+            //     this.vertexDic[vCInx] = vC;
+            //     this.vertexs.push(vC);
+            // }
+
+            // this.indexs.push(vA.index, vC.index, vB.index);
         }
+    }
+
+    addVertex(ver) {
+
     }
 } 
