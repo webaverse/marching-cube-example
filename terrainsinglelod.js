@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import Chunk from './chunk.js';
 import { terrainMaterial } from './material.js';
 
-export default class Terrain extends THREE.Object3D {
+export default class TerrainSingle extends THREE.Object3D {
     constructor(physics) {
         super();
         this.physics = physics;
@@ -10,66 +10,34 @@ export default class Terrain extends THREE.Object3D {
         this.chunkSize = 64;
         this.maxChunkNum = 121;
         this.levelChunks = {};
-        this.maxLevel = 5;
+        this.maxLevel = 3;
         this.center = {};
         this.changed = false;
 
-        this.terrainGeometry = new THREE.BufferGeometry();
-        this.terrainMesh = new THREE.Mesh(this.terrainGeometry, terrainMaterial);
+        // this.terrainGeometry = new THREE.BufferGeometry();
+        // this.terrainMesh = new THREE.Mesh(this.terrainGeometry, terrainMaterial);
 
 
-        //center chunk   charater use chunk;
-        this.centerChunks = new THREE.Object3D();
-        this.add(this.centerChunks);
+        // //center chunk   charater use chunk;
+        // this.centerChunks = new THREE.Object3D();
+        // this.add(this.centerChunks);
 
-        for (let i = this.maxLevel - 1; i >= 0 /* this.maxLevel */; i--) {
+        for (let i = 0; i < this.maxLevel; i++) {
             this.buildLevelChunk(i);
         }
 
     }
 
     updateView(position, onchange) {
-        for (let i = this.maxLevel - 1; i >= 0; i--) {
-            //生成所有的地形LOD
-            this.updateBuildChunk(position, i);
-        }
-        if (onchange && this.changed) {
-            onchange();
-            this.changed = false;
-        }
 
-        // this.terrainGeometry.addGroup()
-        // const pbuff = this.terrainGeometry.getAttribute('position')
-        // pbuff.updateRange()
-
-        // const buffer = new THREE.BufferAttribute()
-        // buffer.updateRange()
-
-        // for (let i = this.maxLevel - 1; i >= 1; i--) {
-        //     this.selectedViewable(i);
-        // }
+        // if (onchange && this.changed) {
+        //     onchange();
+        //     this.changed = false;
+        // } 
     }
 
-    selectedViewable(level) {
-        const cx = this.center[level].x;
-        const cz = this.center[level].z;
 
-        const levelChunk = this.levelChunks[level];
-
-        for (let i = -2; i <= 1; i++) {
-            for (let j = -2; j <= 1; j++) {
-                const ix = cx + i;
-                const iz = cz + j;
-                if (i == -2 || j == -2 || i == 1 || j == 1) {
-                    levelChunk[`${ix}_${iz}`].visible = true;
-                } else {
-                    levelChunk[`${ix}_${iz}`].visible = false;
-                }
-            }
-        }
-    }
-
-    updateBuildChunk(position, level) {
+    updateBuildChunk(position, level) { 
         const px = position.x;
         const pz = position.z;
 
@@ -130,46 +98,32 @@ export default class Terrain extends THREE.Object3D {
 
     }
 
-    buildLevelChunk(level, cx = 0, cz = 0) {
+    buildLevelChunk(level, orign = new THREE.Vector3, cx = 0, cz = 0) {
         if (!this.levelChunks[level])
             this.levelChunks[level] = {};
 
         this.center[level] = { x: cx, z: cz };
 
-        const chunkSize = this.chunkSize * (2 ** level)
+        const chunkSize = this.chunkSize * (2 ** level) 
         for (let i = -2; i <= 1; i++) {
             for (let j = -2; j <= 1; j++) {
+                if (i !== -2 && j !== -2 && i !== 1 && j !== 1 && level !== 0)
+                    continue;
+
                 const ix = i + cx;
                 const iz = j + cz;
-                const x = (i + cx) * chunkSize;
-                const z = (j + cz) * chunkSize;
-
+                const x = (i + cx) * chunkSize + orign.x;
+                const z = (j + cz) * chunkSize + orign.z;
+ 
                 const chunk = new Chunk(new THREE.Vector3(x, 0, z), chunkSize, level, ix, iz);
-                this.levelChunks[level][`${ix}_${iz}`] = chunk;
-                if (level === 0)
-                    this.centerChunks.add(chunk);
-                else
-                    this.add(chunk);
-                chunk.position.y = -5 * level
+                this.levelChunks[level][`${x}_${z}`] = chunk;
+                this.add(chunk);
             }
         }
 
     }
 
-    buildLevelBoundChunk(level = 2) {
-        const size = this.chunkSize * (2 ** level);
-        const lsize = this.chunkSize * (2 ** (level + 1));
-        for (let i = -2; i < 2; i++) {
-            const chunck1 = new Chunk(new THREE.Vector3(size, 0, size * i), size, level, x, z);
-            this.add(chunck1);
-            const chunck2 = new Chunk(new THREE.Vector3(-lsize, 0, size * i), size, level, x, z);
-            this.add(chunck2);
-        }
-        for (let i = -1; i < 1; i++) {
-            const chunck1 = new Chunk(new THREE.Vector3(size * i, 0, size), size);
-            this.add(chunck1);
-            const chunck2 = new Chunk(new THREE.Vector3(size * i, 0, -lsize), size);
-            this.add(chunck2);
-        }
-    }
+
+
+
 } 

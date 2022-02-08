@@ -54,7 +54,7 @@ export default class Chunk extends THREE.Mesh {
         this.unitSize = this.boundsSize / this.segment;
         this.build();
     }
-    density(vec, noiseScale = 2.99, octaves = 6, persistence = 1, lacunarity = 1, floorOffset = 20.19, hardFloor = -2.84, hardFloorWeight = 3.05, noiseWeight = 6.09) {
+    density(vec, noiseScale = 2.99, octaves = 8, persistence = 1, lacunarity = 1.7, floorOffset = 10, hardFloor = -2.84, hardFloorWeight = 3.05, noiseWeight = 6.09) {
         // const pos = this.position.clone().add(id/* _v1.copy(id).multiplyScalar(this.spacing).subScalar(this.boundsSize / 2) */);
         const origin = this.origin.clone();
         _v1.copy(vec);
@@ -62,15 +62,15 @@ export default class Chunk extends THREE.Mesh {
         const curPos = origin.add(_v1);
         const offsetNoise = new THREE.Vector3;
         let noise = 0;
-        let frequency = noiseScale / 140;
-        let amplitude = 1;
-        let weight = 1;
-        const weightMultiplier = 1;
+        let frequency = noiseScale / 2000;
+        let amplitude = 1.2;
+        let weight = 1.5;
+        const weightMultiplier = 1.1;
         const params = { x: 1, y: 0.1 };
         for (let j = 0; j < octaves; j++) {
             // float n = snoise((pos+offsetNoise) * frequency + offsets[j] + offset);
             _v2.copy(curPos).add(offsetNoise).multiplyScalar(frequency); /* + offsets[j] + offset */
-            const n = Perlin.Noisev3(_v2) / 6.888;
+            const n = Perlin.Noisev3(_v2) / 2;
             let v = 1 - Math.abs(n);
             v = v * v;
             v *= weight;
@@ -80,9 +80,12 @@ export default class Chunk extends THREE.Mesh {
             frequency *= lacunarity;
         }
         let finalVal = -(curPos.y * 0.8 + floorOffset) + noise * noiseWeight + (curPos.y % params.x) * params.y;
-        if (curPos.y < hardFloor) {
-            finalVal += hardFloorWeight;
-        }
+        // if (curPos.y < hardFloor) {
+        //     finalVal += hardFloorWeight;
+        // }
+        if (vec.y === 0)
+            finalVal = Math.max(10, finalVal);
+
         const closeEdges = false;
         if (closeEdges) {
             // const edgeOffset = abs(pos * 2) - worldSize + spacing / 2;
@@ -90,7 +93,7 @@ export default class Chunk extends THREE.Mesh {
             //     finalVal = finalVal * (1 - edgeWeight) - 100 * edgeWeight;
         }
         var index = this.indexFromCoord(vec.x, vec.y, vec.z);
-        this.points[index] = new THREE.Vector4(curPos.x, curPos.y - 40, curPos.z, finalVal);
+        this.points[index] = new THREE.Vector4(curPos.x, curPos.y, curPos.z, finalVal);
         this.min.min(this.points[index]);
         this.max.max(this.points[index]);
     }
@@ -131,9 +134,7 @@ export default class Chunk extends THREE.Mesh {
         const seg = this.segment + 1;
         return z * seg * seg + y * seg + x;
     }
-    March(vec) {
-        if (vec.z === this.segment)
-            debugger;
+    March(vec) { 
         // 8 corners of the current cube
         const cubeCorners = [
             this.points[this.indexFromCoord(vec.x, vec.y, vec.z)],

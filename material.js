@@ -24,6 +24,8 @@ const textureLoader = new TextureLoader();
 // const rockTexture = textureLoader.load(`${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/rock_boulder_dry_diff_1k.png`)
 const grassTexture = textureLoader.load('http://127.0.0.1:5501/textures/grasslight-big.jpg')
 const rockTexture = textureLoader.load('http://127.0.0.1:5501/textures/rock_boulder_dry_diff_1k.png')
+// const grassTexture = textureLoader.load('./textures/grasslight-big.jpg')
+// const rockTexture = textureLoader.load('./textures/rock_boulder_dry_diff_1k.png')
 grassTexture.wrapS = THREE.RepeatWrapping;
 grassTexture.wrapT = THREE.RepeatWrapping;
 rockTexture.wrapS = THREE.RepeatWrapping;
@@ -150,22 +152,24 @@ void main() {
         vec3 blending =abs(vtriNormal);
         blending = normalize(max(blending, 0.001)); // Force weights to sum to 1.0
         float b = (blending.x + blending.y + blending.z);
-        blending /= vec3(b, b, b);
+        blending /=b;
 
         
-        vec4 xaxis,yaxis,zaxis;
-        if(vtriNormal.y > 0.6){
-            xaxis = texture2D(grassTexture, vtriCoord.yz*0.1);
-            yaxis = texture2D(grassTexture, vtriCoord.xz*0.1);
-            zaxis = texture2D(grassTexture, vtriCoord.xy*0.1);
-        }
-        else{
-            xaxis = texture2D(rockTexture, vtriCoord.yz*0.1);
-            yaxis = texture2D(rockTexture, vtriCoord.xz*0.1);
-            zaxis = texture2D(rockTexture, vtriCoord.xy*0.1);
-        }
+        vec4 xaxis,yaxis,zaxis; 
+        xaxis = texture2D(grassTexture, vtriCoord.yz*0.1);
+        yaxis = texture2D(grassTexture, vtriCoord.xz*0.1);
+        zaxis = texture2D(grassTexture, vtriCoord.xy*0.1);
+        vec4 grassTex = xaxis * blending.x + yaxis * blending.y + zaxis * blending.z; 
+    
+        xaxis = texture2D(rockTexture, vtriCoord.yz*0.1);
+        yaxis = texture2D(rockTexture, vtriCoord.xz*0.1);
+        zaxis = texture2D(rockTexture, vtriCoord.xy*0.1);
+        vec4 rockTex = xaxis * blending.x + yaxis * blending.y + zaxis * blending.z; 
+        float amount = smoothstep (0.6,0.8,vtriNormal.y);
+
+        vec4 tex =amount* grassTex+(1.0-amount)*rockTex;
+         
         // blend the results of the 3 planar projections.
-        vec4 tex = xaxis * blending.x + xaxis * blending.y + zaxis * blending.z; 
         diffuseColor *= tex;
     #endif
     #include <color_fragment>
