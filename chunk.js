@@ -22,6 +22,7 @@ export default class Chunk extends THREE.Mesh {
         this.origin.copy(origin);
         this.boundsSize = chunkSize;
         this.unitSize = this.boundsSize / this.segment;
+        this.yUnitSize = 4;
         this.material = terrainMaterial;
         this.max = new THREE.Vector4(-10000, -10000, -10000, -10000);
         this.min = new THREE.Vector4(+10000, +10000, +10000, +10000);
@@ -54,22 +55,25 @@ export default class Chunk extends THREE.Mesh {
         this.unitSize = this.boundsSize / this.segment;
         this.build();
     }
-    density(vec, noiseScale = 2.99, octaves = 8, persistence = 1, lacunarity = 1.7, floorOffset = 10, hardFloor = -2.84, hardFloorWeight = 3.05, noiseWeight = 6.09) {
+    density(vec, noiseScale = 3, octaves = 8, persistence = 1.15, lacunarity = 1.6, floorOffset = 20, hardFloor = 2, hardFloorWeight = 3.05, noiseWeight = 6.09) {
         // const pos = this.position.clone().add(id/* _v1.copy(id).multiplyScalar(this.spacing).subScalar(this.boundsSize / 2) */);
         const origin = this.origin.clone();
         _v1.copy(vec);
-        _v1.multiplyScalar(this.unitSize);
+        _v1.x *= this.unitSize;
+        _v1.y *= this.yUnitSize;
+        _v1.z *= this.unitSize;
+        
         const curPos = origin.add(_v1);
         const offsetNoise = new THREE.Vector3;
         let noise = 0;
         let frequency = noiseScale / 2000;
-        let amplitude = 1.2;
-        let weight = 1.5;
-        const weightMultiplier = 1.1;
+        let amplitude = 1.0;
+        let weight = 1.05;
+        const weightMultiplier = 1.05;
         const params = { x: 1, y: 0.1 };
         for (let j = 0; j < octaves; j++) {
-            // float n = snoise((pos+offsetNoise) * frequency + offsets[j] + offset);
             _v2.copy(curPos).add(offsetNoise).multiplyScalar(frequency); /* + offsets[j] + offset */
+            // float n = snoise((pos+offsetNoise) * frequency + offsets[j] + offset);
             const n = Perlin.Noisev3(_v2) / 2;
             let v = 1 - Math.abs(n);
             v = v * v;
@@ -80,11 +84,11 @@ export default class Chunk extends THREE.Mesh {
             frequency *= lacunarity;
         }
         let finalVal = -(curPos.y * 0.8 + floorOffset) + noise * noiseWeight + (curPos.y % params.x) * params.y;
-        // if (curPos.y < hardFloor) {
-        //     finalVal += hardFloorWeight;
-        // }
+        if (curPos.y < hardFloor) {
+            finalVal += hardFloorWeight;
+        }
         if (vec.y === 0)
-            finalVal = Math.max(10, finalVal);
+            finalVal = 0.1
 
         const closeEdges = false;
         if (closeEdges) {

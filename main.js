@@ -1,8 +1,7 @@
 
 import * as THREE from 'three'
 import * as OrbitControls from "three/examples/jsm/controls/OrbitControls";
-import Terrain from "./terrain.js";
-import TerrainSingle from './terrainsinglelod.js';
+import Terrain from "./terrain.js"; 
 const app = document.querySelector('#app');
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -11,7 +10,7 @@ const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerH
 const controls = new OrbitControls.OrbitControls(camera, renderer.domElement);
 function init() {
   camera.position.y = 100.1;
-  camera.position.z = 10.1;
+  camera.position.z = 0.01;
   controls.update();
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0xffffff);
@@ -21,7 +20,7 @@ function init() {
     camera.updateProjectionMatrix();
   });
   app.append(renderer.domElement);
-  const terrain = new TerrainSingle();
+  const terrain = new Terrain();
   terrain.updateView(new THREE.Vector3());
 
   controls.addEventListener('change', (ev) => {

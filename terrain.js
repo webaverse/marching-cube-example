@@ -10,9 +10,10 @@ export default class Terrain extends THREE.Object3D {
         this.chunkSize = 64;
         this.maxChunkNum = 121;
         this.levelChunks = {};
-        this.maxLevel = 5;
+        this.maxLevel = 1;
         this.center = {};
         this.changed = false;
+        this.bboxs = []
 
         this.terrainGeometry = new THREE.BufferGeometry();
         this.terrainMesh = new THREE.Mesh(this.terrainGeometry, terrainMaterial);
@@ -22,32 +23,21 @@ export default class Terrain extends THREE.Object3D {
         this.centerChunks = new THREE.Object3D();
         this.add(this.centerChunks);
 
-        for (let i = this.maxLevel - 1; i >= 0 /* this.maxLevel */; i--) {
+        for (let i = 0; i < this.maxLevel; i++) {
             this.buildLevelChunk(i);
         }
 
     }
 
     updateView(position, onchange) {
-        for (let i = this.maxLevel - 1; i >= 0; i--) {
+        for (let i = 0; i < this.maxLevel; i++) {
             //生成所有的地形LOD
             this.updateBuildChunk(position, i);
         }
         if (onchange && this.changed) {
             onchange();
             this.changed = false;
-        }
-
-        // this.terrainGeometry.addGroup()
-        // const pbuff = this.terrainGeometry.getAttribute('position')
-        // pbuff.updateRange()
-
-        // const buffer = new THREE.BufferAttribute()
-        // buffer.updateRange()
-
-        // for (let i = this.maxLevel - 1; i >= 1; i--) {
-        //     this.selectedViewable(i);
-        // }
+        } 
     }
 
     selectedViewable(level) {
@@ -74,13 +64,10 @@ export default class Terrain extends THREE.Object3D {
         const pz = position.z;
 
         const chunkSize = this.chunkSize * (2 ** level)
-        const cx = Math.floor(px / chunkSize);
-        const cz = Math.floor(pz / chunkSize);
+        const cx = Math.floor((px + chunkSize) / chunkSize) - 1;
+        const cz = Math.floor((pz + chunkSize) / chunkSize) - 1;
         const center = this.center[level];
-        // const needUpdate = cx - center.x >= 1
-        //     || cz - center.z >= 1
-        //     || center.x - cx >= 2
-        //     || center.z - cz >= 2;
+
         const needUpdate = cx !== center.x || cz !== center.z
         console.log([this.center[level].x - cx, this.center[level].z - cz]);
         if (!needUpdate)
@@ -139,8 +126,8 @@ export default class Terrain extends THREE.Object3D {
         const chunkSize = this.chunkSize * (2 ** level)
         for (let i = -2; i <= 1; i++) {
             for (let j = -2; j <= 1; j++) {
-                const ix = i + cx;
-                const iz = j + cz;
+                const ix = i + cx - 1;
+                const iz = j + cz - 1;
                 const x = (i + cx) * chunkSize;
                 const z = (j + cz) * chunkSize;
 
@@ -150,7 +137,7 @@ export default class Terrain extends THREE.Object3D {
                     this.centerChunks.add(chunk);
                 else
                     this.add(chunk);
-                chunk.position.y = -5 * level
+                // chunk.position.y = -5 * level
             }
         }
 

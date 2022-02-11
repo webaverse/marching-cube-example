@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { MeshPhongMaterial, TextureLoader } from 'three';
+import { MeshPhongMaterial, TextureLoader, Vector4 } from 'three';
 
 const vs = `
     vec3 blending =abs(normal);
@@ -19,6 +19,12 @@ const fs = `
 
 `;
 export const terrainMaterial = new MeshPhongMaterial({ color: 0xffffff });
+export const terrainMaterials = [
+    new MeshPhongMaterial({ color: 0xffffff }),
+    new MeshPhongMaterial({ color: 0xffffff }),
+    new MeshPhongMaterial({ color: 0xffffff }),
+    new MeshPhongMaterial({ color: 0xffffff }),
+    new MeshPhongMaterial({ color: 0xffffff })];
 const textureLoader = new TextureLoader();
 // const grassTexture = textureLoader.load(`${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/grasslight-big.jpg`)
 // const rockTexture = textureLoader.load(`${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/rock_boulder_dry_diff_1k.png`)
@@ -33,6 +39,10 @@ rockTexture.wrapT = THREE.RepeatWrapping;
 terrainMaterial.onBeforeCompile = (shader, renderer) => {
     const fs = shader.fragmentShader;
     const vs = shader.vertexShader;
+    shader.uniforms = shader.uniforms || {};
+    shader.uniforms['bbox'] = { value: new Vector4() };
+    terrainMaterial.uniforms = shader.uniforms;
+    console.log('onBeforeCompile');
     shader.vertexShader =
         `
 #define PHONG
@@ -121,6 +131,7 @@ uniform float opacity;
 #include <logdepthbuf_pars_fragment>
 #include <clipping_planes_pars_fragment>
 #ifdef USE_TRIPLANETEXTURE
+    uniform vec4 bbox; 
     varying vec3  vtriCoord;
     varying vec3  vtriNormal;
     uniform sampler2D grassTexture;
@@ -171,6 +182,8 @@ void main() {
          
         // blend the results of the 3 planar projections.
         diffuseColor *= tex;
+        if(vtriCoord.x>bbox.x && vtriCoord.z>bbox.y && vtriCoord.x<bbox.z && vtriCoord.z<bbox.w)
+            discard;
     #endif
     #include <color_fragment>
     #include <alphamap_fragment>
