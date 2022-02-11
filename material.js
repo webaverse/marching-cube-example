@@ -36,15 +36,13 @@ grassTexture.wrapS = THREE.RepeatWrapping;
 grassTexture.wrapT = THREE.RepeatWrapping;
 rockTexture.wrapS = THREE.RepeatWrapping;
 rockTexture.wrapT = THREE.RepeatWrapping;
-terrainMaterial.onBeforeCompile = (shader, renderer) => {
-    const fs = shader.fragmentShader;
-    const vs = shader.vertexShader;
-    shader.uniforms = shader.uniforms || {};
-    shader.uniforms['bbox'] = { value: new Vector4() };
-    terrainMaterial.uniforms = shader.uniforms;
-    console.log('onBeforeCompile');
-    shader.vertexShader =
-        `
+terrainMaterials.forEach(material => {
+    material.onBeforeCompile = (shader, renderer) => {
+        const fs = shader.fragmentShader;
+        const vs = shader.vertexShader;
+        console.log('onBeforeCompile');
+        shader.vertexShader =
+            `
 #define PHONG
 varying vec3 vViewPosition;
 #include <common>
@@ -96,8 +94,8 @@ void main() {
     #include <shadowmap_vertex>
     #include <fog_vertex>
 }`;
-    shader.fragmentShader =
-        `
+        shader.fragmentShader =
+            `
 #define PHONG
 uniform vec3 diffuse;
 uniform vec3 emissive;
@@ -207,11 +205,20 @@ void main() {
     #include <dithering_fragment>
 }`  ;
 
-    shader.defines = shader.defines || {};
-    shader.uniforms.grassTexture = { value: grassTexture };
-    shader.uniforms.rockTexture = { value: rockTexture };
-    shader.defines['USE_TRIPLANETEXTURE'] = '';
-}
+        shader.defines = shader.defines || {};
+        shader.uniforms.grassTexture = { value: grassTexture };
+        shader.uniforms.rockTexture = { value: rockTexture };
+        shader.uniforms.bbox = { value: new Vector4() };
+        terrainMaterial.uniforms = shader.uniforms;
+        shader.defines['USE_TRIPLANETEXTURE'] = '';
+        debugger
+    }
+
+    material.onBeforeRender = function (shader, renderer) {
+        if (!shader.bbox.value.equals(this.bbox))
+            shader.bbox.value.copy(this.bbox);
+    }
+})
 //     new THREE.ShaderMaterial({
 //     vertexShader: vs,
 //     fragmentShader: fs,

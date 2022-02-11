@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import Perlin from './perlin.js'
 import * as mc from './mc.js'
-import { terrainMaterial } from './material.js';
+import { terrainMaterials } from './material.js';
 const _v1 = new THREE.Vector3;
 const _v2 = new THREE.Vector3;
 
@@ -13,7 +13,7 @@ export default class Chunk extends THREE.Mesh {
         this.level = level;
         this.x = x;
         this.z = z;
-        this.uid = `${x}_${z}`;
+        this.key = `${x}_${z}`;
         this.spacing = 1;
         this.points = {};
         this.segment = 32; //分段
@@ -23,7 +23,8 @@ export default class Chunk extends THREE.Mesh {
         this.boundsSize = chunkSize;
         this.unitSize = this.boundsSize / this.segment;
         this.yUnitSize = 4;
-        this.material = terrainMaterial;
+        this.material = terrainMaterials[level];
+        this.bbox = new THREE.Vector4();
         this.max = new THREE.Vector4(-10000, -10000, -10000, -10000);
         this.min = new THREE.Vector4(+10000, +10000, +10000, +10000);
         this.vertexDic = {};
@@ -39,7 +40,7 @@ export default class Chunk extends THREE.Mesh {
         this.z = z;
         this.origin.x = px;
         this.origin.z = pz;
-        this.uid = `${x}_${z}`;
+        this.key = `${x}_${z}`;
         this.build();
     }
 
