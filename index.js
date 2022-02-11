@@ -18,7 +18,7 @@ export default () => {
     //     const physicsId = physics.addGeometry(mesh)
     //     physicsIds.push(physicsId);
     // });
-    const physicsId = physics.addGeometry(terrain.centerChunks)
+    const physicsId = physics.addGeometry(terrain)
     physicsIds.push(physicsId);
 
     useCleanup(() => {
@@ -38,9 +38,9 @@ export default () => {
             terrain.updateView(player.position, () => {
                 for (const physicsId of physicsIds) {
                     physics.removeGeometry(physicsId);
-                }
-                physicsIds = []
-                const physicsId = physics.addGeometry(terrain.centerChunks)
+                }    
+                physicsIds = [];
+                const physicsId = physics.addGeometry(terrain)
                 physicsIds.push(physicsId);
             });
         }
