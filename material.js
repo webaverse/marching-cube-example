@@ -215,8 +215,8 @@ void main() {
     }
 
     material.onBeforeRender = function (shader, renderer) {
-        if (!shader.bbox.value.equals(this.bbox))
-            shader.bbox.value.copy(this.bbox);
+        if (shader.uniforms && !shader.uniforms.bbox.value.equals(this.bbox))
+            shader.uniforms.bbox.value.copy(this.bbox);
     }
 })
 //     new THREE.ShaderMaterial({
