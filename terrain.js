@@ -3,9 +3,10 @@ import Chunk from './chunk.js';
 import { terrainMaterial } from './material.js';
 
 export default class Terrain extends THREE.Object3D {
-    constructor(physics) {
+    constructor(physics, geometryUtils) {
         super();
         this.physics = physics;
+        this.geometryUtils = geometryUtils;
         this.chunks = {};
         this.chunkSize = 64;
         this.maxChunkNum = 121;
@@ -26,7 +27,6 @@ export default class Terrain extends THREE.Object3D {
         for (let i = 0; i < this.maxLevel; i++) {
             this.buildLevelChunk(i);
         }
-
     }
 
     updateView(position, onchange) {
@@ -37,7 +37,7 @@ export default class Terrain extends THREE.Object3D {
         if (onchange && this.changed) {
             onchange();
             this.changed = false;
-        } 
+        }
     }
 
     selectedViewable(level) {
@@ -131,7 +131,7 @@ export default class Terrain extends THREE.Object3D {
                 const x = (i + cx) * chunkSize;
                 const z = (j + cz) * chunkSize;
 
-                const chunk = new Chunk(new THREE.Vector3(x, 0, z), chunkSize, level, ix, iz);
+                const chunk = new Chunk(new THREE.Vector3(x, 0, z), chunkSize, level, ix, iz, this.geometryUtils);
                 this.levelChunks[level][`${ix}_${iz}`] = chunk;
                 if (level === 0)
                     this.centerChunks.add(chunk);
@@ -147,15 +147,15 @@ export default class Terrain extends THREE.Object3D {
         const size = this.chunkSize * (2 ** level);
         const lsize = this.chunkSize * (2 ** (level + 1));
         for (let i = -2; i < 2; i++) {
-            const chunck1 = new Chunk(new THREE.Vector3(size, 0, size * i), size, level, x, z);
+            const chunck1 = new Chunk(new THREE.Vector3(size, 0, size * i), size, level, x, z, this.geometryUtils);
             this.add(chunck1);
-            const chunck2 = new Chunk(new THREE.Vector3(-lsize, 0, size * i), size, level, x, z);
+            const chunck2 = new Chunk(new THREE.Vector3(-lsize, 0, size * i), size, level, x, z, this.geometryUtils);
             this.add(chunck2);
         }
         for (let i = -1; i < 1; i++) {
-            const chunck1 = new Chunk(new THREE.Vector3(size * i, 0, size), size);
+            const chunck1 = new Chunk(new THREE.Vector3(size * i, 0, size), size, 0, 0, 0, this.geometryUtils);
             this.add(chunck1);
-            const chunck2 = new Chunk(new THREE.Vector3(size * i, 0, -lsize), size);
+            const chunck2 = new Chunk(new THREE.Vector3(size * i, 0, -lsize), size, 0, 0, 0, this.geometryUtils);
             this.add(chunck2);
         }
     }
