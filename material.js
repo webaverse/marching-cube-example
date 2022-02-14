@@ -1,29 +1,12 @@
 import * as THREE from 'three';
 import { MeshPhongMaterial, TextureLoader, Vector4 } from 'three';
 
-const vs = `
-    vec3 blending =abs(normal);
-    blending = normalize(max(blending, 0.00001)); // Force weights to sum to 1.0
-    float b = (blending.x + blending.y + blending.z);
-    blending /= vec3(b, b, b)
-
-    const wpos = position;
-    vec4 xaxis = texture2D( rockTexture, wpos.yz);
-    vec4 yaxis = texture2D( rockTexture, wpos.xz);
-    vec4 zaxis = texture2D( rockTexture, wpos.xy);
-    // blend the results of the 3 planar projections.
-    vec4 tex = xaxis * blending.x + xaxis * blending.y + zaxis * blending.z;
-
-`;
-const fs = `
-
-`;
 export const terrainMaterial = new MeshPhongMaterial({ color: 0xffffff });
 export const terrainMaterials = [
-    new MeshPhongMaterial({ color: 0xffffff }),
-    new MeshPhongMaterial({ color: 0xffffff }),
-    new MeshPhongMaterial({ color: 0xffffff }),
-    new MeshPhongMaterial({ color: 0xffffff }),
+    new MeshPhongMaterial({ color: 0xfffffb, uniforms: { a: { value: 0 } } }),
+    new MeshPhongMaterial({ color: 0xfffffc }),
+    new MeshPhongMaterial({ color: 0xfffffd }),
+    new MeshPhongMaterial({ color: 0xfffffe }),
     new MeshPhongMaterial({ color: 0xffffff })];
 const textureLoader = new TextureLoader();
 // const grassTexture = textureLoader.load(`${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/grasslight-big.jpg`)
@@ -38,8 +21,6 @@ rockTexture.wrapS = THREE.RepeatWrapping;
 rockTexture.wrapT = THREE.RepeatWrapping;
 terrainMaterials.forEach(material => {
     material.onBeforeCompile = (shader, renderer) => {
-        const fs = shader.fragmentShader;
-        const vs = shader.vertexShader;
         console.log('onBeforeCompile');
         shader.vertexShader =
             `
@@ -215,8 +196,10 @@ void main() {
     }
 
     material.onBeforeRender = function (shader, renderer) {
-        if (shader.uniforms && !shader.uniforms.bbox.value.equals(this.bbox))
+        if (shader.uniforms && this.bbox && !shader.uniforms.bbox.value.equals(this.bbox)) {
+            // debugger
             shader.uniforms.bbox.value.copy(this.bbox);
+        }
     }
 })
 //     new THREE.ShaderMaterial({

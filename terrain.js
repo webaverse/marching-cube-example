@@ -25,7 +25,7 @@ export default class Terrain extends THREE.Object3D {
         // this.centerChunks = new THREE.Object3D();
         // this.add(this.centerChunks);
 
-        for (let i = 4; i < 5; i++) {
+        for (let i = 1; i < 5; i++) {
             this.buildLevelChunk(i);
         }
 
@@ -152,6 +152,8 @@ export default class Terrain extends THREE.Object3D {
         const bbox = new THREE.Vector4();
         bbox.x = bbox.y = -chunkSize
         bbox.z = bbox.w = chunkSize
+
+        let chunk;
         for (let i = -2; i <= 1; i++) {
             for (let j = -2; j <= 1; j++) {
                 const ix = i + cx;
@@ -159,11 +161,16 @@ export default class Terrain extends THREE.Object3D {
                 const x = (i + cx) * chunkSize;
                 const z = (j + cz) * chunkSize;
 
-                const chunk = new Chunk(new THREE.Vector3(x, 0, z), chunkSize, level, ix, iz);
+                chunk = new Chunk(new THREE.Vector3(x, 0, z), chunkSize, level, ix, iz);
                 this.levelChunks[level][`${ix}_${iz}`] = chunk;
                 this.add(chunk);
             }
         }
+        chunk.material.bbox = chunk.material.bbox || new THREE.Vector4;
+
+        const bwidth = -2 * chunkSize;
+        chunk.material.bbox.set(-bwidth, -bwidth, bwidth, bwidth);
+
     }
 
 

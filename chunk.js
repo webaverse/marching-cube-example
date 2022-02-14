@@ -50,12 +50,14 @@ export default class Chunk extends THREE.Mesh {
         _v2.set(v2.x, v2.y, v2.z);
         return _v1.clone().add(_v2.sub(_v1).multiplyScalar(t));
     };
+
     update(origin, chunkSize = 100) {
         this.origin.copy(origin);
         this.boundsSize = chunkSize;
         this.unitSize = this.boundsSize / this.segment;
         this.build();
     }
+    
     density(vec, noiseScale = 3, octaves = 8, persistence = 1.15, lacunarity = 1.6, floorOffset = 20, hardFloor = 2, hardFloorWeight = 3.05, noiseWeight = 6.09) {
         // const pos = this.position.clone().add(id/* _v1.copy(id).multiplyScalar(this.spacing).subScalar(this.boundsSize / 2) */);
         const origin = this.origin.clone();
