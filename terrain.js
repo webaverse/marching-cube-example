@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Vector3 } from 'three';
-import Chunk from './chunk-sim.js';
+import Chunk from './chunk.js';
 import { terrainMaterial } from './material.js';
 
 export default class Terrain extends THREE.Object3D {
@@ -123,21 +123,9 @@ export default class Terrain extends THREE.Object3D {
                         levelChunk[chunk.key] = chunk;
                         this.add(chunk)
                     }
-                    chunk.position.y = -5 * level;
                 }
             }
-        }
-
-        // let t = 0
-        // for (const key in levelChunk) {
-        //     t++;
-        // }
-        // for (const key in keyDix) {
-        //     if (!levelChunk[key])
-        //         debugger
-        // }
-        // if (t !== 16)
-        //     debugger
+        } 
 
     }
 
@@ -164,8 +152,6 @@ export default class Terrain extends THREE.Object3D {
 
                 chunk = new Chunk(new THREE.Vector3(x, 0, z), chunkSize, level, ix, iz);
                 this.levelChunks[level][`${ix}_${iz}`] = chunk;
-                
-                chunk.position.y = -5 * level;
                 this.add(chunk);
             }
         }

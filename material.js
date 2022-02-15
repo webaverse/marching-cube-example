@@ -3,11 +3,11 @@ import { MeshPhongMaterial, TextureLoader, Vector4 } from 'three';
 
 export const terrainMaterial = new MeshPhongMaterial({ color: 0xffffff });
 export const terrainMaterials = [
-    new MeshPhongMaterial({ color: 0xfffffb, uniforms: { a: { value: 0 } } }),
-    new MeshPhongMaterial({ color: 0xfffffc }),
-    new MeshPhongMaterial({ color: 0xfffffd }),
-    new MeshPhongMaterial({ color: 0xfffffe }),
-    new MeshPhongMaterial({ color: 0xffffff })];
+    new MeshPhongMaterial({ color: 0xfffffb, wireframe: true, uniforms: { a: { value: 0 } } }),
+    new MeshPhongMaterial({ color: 0xfffffc, wireframe: true }),
+    new MeshPhongMaterial({ color: 0xfffffd, wireframe: true }),
+    new MeshPhongMaterial({ color: 0xfffffe, wireframe: true }),
+    new MeshPhongMaterial({ color: 0xffffff, wireframe: true })];
 const textureLoader = new TextureLoader();
 // const grassTexture = textureLoader.load(`${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/grasslight-big.jpg`)
 // const rockTexture = textureLoader.load(`${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/rock_boulder_dry_diff_1k.png`)
