@@ -1,47 +1,52 @@
 import * as THREE from 'three';
-import metaversefile from 'metaversefile';
+import metaversefile from 'metaversefile'
+import Terrain from './terrain.js';
 
-const {useFrame, useLocalPlayer, useCleanup, useMaterials, usePhysics, useGeometryUtils} = metaversefile;
+const { useFrame, useLocalPlayer, useLoaders, useUi, usePhysics, useCleanup, useGeometryUtils } = metaversefile;
+
+
 
 export default () => {
+    const physics = usePhysics();
+    const geometryUtils = useGeometryUtils();
 
-  const geometryUtils = useGeometryUtils();
+    const rootScene = new THREE.Object3D();
+    const terrain = new Terrain(physics, geometryUtils);
+    rootScene.add(terrain);
 
-  const rootScene = new THREE.Object3D();
+    // let physicsIds = [];
+    // // terrain.children.forEach(mesh => {
+    // //     const physicsId = physics.addGeometry(mesh)
+    // //     physicsIds.push(physicsId);
+    // // });
+    // const physicsId = physics.addGeometry(terrain.centerChunks)
+    // physicsIds.push(physicsId);
 
-  const dims = [32, 32, 32];
-  const shift = [0, 0, 0];
-  const scale = [1.0, 1.0, 1.0];
-  let potential = [];
+    // useCleanup(() => {
+    //     for (const physicsId of physicsIds) {
+    //         physics.removeGeometry(physicsId);
+    //     }
+    // });
 
-  const center = new THREE.Vector3(...dims).multiplyScalar(0.5);
+    const player = useLocalPlayer();
+    const nextPosition = player.position.clone();
+    terrain.updateView(player.position);
+    const diffDis = 10;
 
-  for (let x = 0; x < dims[0]; x++) {
-    for (let y = 0; y < dims[1]; y++) {
-      for (let z = 0; z < dims[2]; z++) {
-        potential[x * dims[0] * dims[1] + y * dims[0] + z] = -1;
-        if (new THREE.Vector3(x, y, z).distanceTo(center) < dims[0] / 2 - 1) {
-          potential[x * dims[0] * dims[1] + y * dims[0] + z] = new THREE.Vector3(x, y, z).distanceTo(center);
+    useFrame(() => {
+        if (nextPosition.distanceTo(player.position) > diffDis) {
+            nextPosition.copy(player.position);
+            terrain.updateView(player.position, () => {
+                // for (const physicsId of physicsIds) {
+                //     physics.removeGeometry(physicsId);
+                // }
+                // physicsIds = []
+                // const physicsId = physics.addGeometry(terrain.centerChunks)
+                // physicsIds.push(physicsId);
+            });
         }
-      }
-    }
-  }
+    });
+    rootScene.add(new THREE.AxesHelper(1000))
 
-  const output = geometryUtils.marchingCubes(dims, potential, shift, scale);
-
-  let geometry = new THREE.BufferGeometry();
-  geometry.setIndex(new THREE.Uint16BufferAttribute(output.faces, 1));
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(output.positions, 3));
-
-  rootScene.add(new THREE.Mesh(
-    geometry, new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide, wireframe: false })
-  ));
-
-  rootScene.add(new THREE.Mesh(
-    geometry, new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, wireframe: true })
-  ));
-
-  useCleanup(() => {});
-
-  return rootScene;
+    return rootScene;
 }

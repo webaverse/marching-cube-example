@@ -1,4 +1,4 @@
 {
-    "name": "marching-cube-example",
-    "start_url": "index.js"
+  "name": "terrain",
+  "start_url": "index.js"
 }
