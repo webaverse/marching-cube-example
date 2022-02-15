@@ -21,7 +21,7 @@ rockTexture.wrapS = THREE.RepeatWrapping;
 rockTexture.wrapT = THREE.RepeatWrapping;
 terrainMaterials.forEach(material => {
     material.onBeforeCompile = (shader, renderer) => {
-        console.log('onBeforeCompile');
+        material.shader = shader;
         shader.vertexShader =
             `
 #define PHONG
@@ -190,16 +190,22 @@ void main() {
         shader.uniforms.grassTexture = { value: grassTexture };
         shader.uniforms.rockTexture = { value: rockTexture };
         shader.uniforms.bbox = { value: new Vector4() };
+        // if (material.bbox)
+        // { 
+        //     shader.uniforms.bbox.value.copy(material.bbox);
+        // }
         terrainMaterial.uniforms = shader.uniforms;
         shader.defines['USE_TRIPLANETEXTURE'] = '';
-        debugger
     }
 
-    material.onBeforeRender = function (shader, renderer) {
-        if (shader.uniforms && this.bbox && !shader.uniforms.bbox.value.equals(this.bbox)) {
-            // debugger
-            shader.uniforms.bbox.value.copy(this.bbox);
-        }
+    material.onBeforeRender = (renderer) => {
+        if (!material.shader)
+            return;
+
+        // const shader = material.shader;
+        // if (shader.uniforms && material.bbox && !shader.uniforms.bbox.value.equals(material.bbox)) {
+        //     shader.uniforms.bbox.value.copy(material.bbox);
+        // }
     }
 })
 //     new THREE.ShaderMaterial({
