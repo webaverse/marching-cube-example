@@ -1,50 +1,29 @@
 import * as THREE from 'three';
 import { MeshPhongMaterial, TextureLoader, Vector4 } from 'three';
 
-const vs = `
-    vec3 blending =abs(normal);
-    blending = normalize(max(blending, 0.00001)); // Force weights to sum to 1.0
-    float b = (blending.x + blending.y + blending.z);
-    blending /= vec3(b, b, b)
-
-    const wpos = position;
-    vec4 xaxis = texture2D( rockTexture, wpos.yz);
-    vec4 yaxis = texture2D( rockTexture, wpos.xz);
-    vec4 zaxis = texture2D( rockTexture, wpos.xy);
-    // blend the results of the 3 planar projections.
-    vec4 tex = xaxis * blending.x + xaxis * blending.y + zaxis * blending.z;
-
-`;
-const fs = `
-
-`;
 export const terrainMaterial = new MeshPhongMaterial({ color: 0xffffff });
 export const terrainMaterials = [
-    new MeshPhongMaterial({ color: 0xffffff }),
-    new MeshPhongMaterial({ color: 0xffffff }),
-    new MeshPhongMaterial({ color: 0xffffff }),
-    new MeshPhongMaterial({ color: 0xffffff }),
-    new MeshPhongMaterial({ color: 0xffffff })];
+    new MeshPhongMaterial({ color: 0xfffffb, wireframe: true }),
+    new MeshPhongMaterial({ color: 0xfffffc, wireframe: true }),
+    new MeshPhongMaterial({ color: 0xfffffd, wireframe: true }),
+    new MeshPhongMaterial({ color: 0xfffffe, wireframe: true }),
+    new MeshPhongMaterial({ color: 0xffffff, wireframe: true })];
 const textureLoader = new TextureLoader();
 // const grassTexture = textureLoader.load(`${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/grasslight-big.jpg`)
 // const rockTexture = textureLoader.load(`${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/rock_boulder_dry_diff_1k.png`)
-const grassTexture = textureLoader.load('http://127.0.0.1:3000/textures/grasslight-big.jpg')
-const rockTexture = textureLoader.load('http://127.0.0.1:3000/textures/rock_boulder_dry_diff_1k.png')
+const grassTexture = textureLoader.load('http://127.0.0.1:5501/textures/grasslight-big.jpg')
+const rockTexture = textureLoader.load('http://127.0.0.1:5501/textures/rock_boulder_dry_diff_1k.png')
 // const grassTexture = textureLoader.load('./textures/grasslight-big.jpg')
 // const rockTexture = textureLoader.load('./textures/rock_boulder_dry_diff_1k.png')
 grassTexture.wrapS = THREE.RepeatWrapping;
 grassTexture.wrapT = THREE.RepeatWrapping;
 rockTexture.wrapS = THREE.RepeatWrapping;
 rockTexture.wrapT = THREE.RepeatWrapping;
-terrainMaterial.onBeforeCompile = (shader, renderer) => {
-    const fs = shader.fragmentShader;
-    const vs = shader.vertexShader;
-    shader.uniforms = shader.uniforms || {};
-    shader.uniforms['bbox'] = { value: new Vector4() };
-    terrainMaterial.uniforms = shader.uniforms;
-    console.log('onBeforeCompile');
-    shader.vertexShader =
-        `
+terrainMaterials.forEach(material => {
+    material.onBeforeCompile = (shader, renderer) => {
+        console.log('onBeforeCompile');
+        shader.vertexShader =
+            `
 #define PHONG
 varying vec3 vViewPosition;
 #include <common>
@@ -96,8 +75,8 @@ void main() {
     #include <shadowmap_vertex>
     #include <fog_vertex>
 }`;
-    shader.fragmentShader =
-        `
+        shader.fragmentShader =
+            `
 #define PHONG
 uniform vec3 diffuse;
 uniform vec3 emissive;
@@ -207,11 +186,22 @@ void main() {
     #include <dithering_fragment>
 }`  ;
 
-    shader.defines = shader.defines || {};
-    shader.uniforms.grassTexture = { value: grassTexture };
-    shader.uniforms.rockTexture = { value: rockTexture };
-    shader.defines['USE_TRIPLANETEXTURE'] = '';
-}
+        shader.defines = shader.defines || {};
+        shader.uniforms.grassTexture = { value: grassTexture };
+        shader.uniforms.rockTexture = { value: rockTexture };
+        shader.uniforms.bbox = { value: new Vector4() };
+        terrainMaterial.uniforms = shader.uniforms;
+        shader.defines['USE_TRIPLANETEXTURE'] = '';
+        debugger
+    }
+
+    material.onBeforeRender = function (shader, renderer) {
+        if (shader.uniforms && this.bbox && !shader.uniforms.bbox.value.equals(this.bbox)) {
+            // debugger
+            shader.uniforms.bbox.value.copy(this.bbox);
+        }
+    }
+})
 //     new THREE.ShaderMaterial({
 //     vertexShader: vs,
 //     fragmentShader: fs,
