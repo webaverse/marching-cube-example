@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Vector3 } from 'three';
-import Chunk from './chunk.js';
+import Chunk from './chunk-sim.js';
 import { terrainMaterial } from './material.js';
 
 export default class Terrain extends THREE.Object3D {
@@ -25,14 +25,14 @@ export default class Terrain extends THREE.Object3D {
         // this.centerChunks = new THREE.Object3D();
         // this.add(this.centerChunks);
 
-        for (let i = 1; i < 5; i++) {
+        for (let i = 0; i < this.maxLevel; i++) {
             this.buildLevelChunk(i);
         }
 
     }
 
     updateView(position, onchange) {
-        for (let i = 4; i < 5; i++) {
+        for (let i = 0; i < this.maxLevel; i++) {
             //生成所有的地形LOD
             this.updateBuildChunk(position, i);
         }
@@ -123,6 +123,7 @@ export default class Terrain extends THREE.Object3D {
                         levelChunk[chunk.key] = chunk;
                         this.add(chunk)
                     }
+                    chunk.position.y = -5 * level;
                 }
             }
         }
@@ -163,6 +164,8 @@ export default class Terrain extends THREE.Object3D {
 
                 chunk = new Chunk(new THREE.Vector3(x, 0, z), chunkSize, level, ix, iz);
                 this.levelChunks[level][`${ix}_${iz}`] = chunk;
+                
+                chunk.position.y = -5 * level;
                 this.add(chunk);
             }
         }
