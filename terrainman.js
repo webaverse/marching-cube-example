@@ -52,7 +52,7 @@ export class TerrainMan {
     init() {
         this._builder = new TerrainChunkRebuilder();
 
-        this.initTerrain()
+        this.initTerrain();
     }
 
     initTerrain() {

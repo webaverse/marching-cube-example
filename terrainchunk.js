@@ -6,8 +6,15 @@ import * as mc from './mc.js'
 
 const _v1 = new THREE.Vector3;
 const _v2 = new THREE.Vector3;
-const MAX_STEP = 1000;
+const MAX_STEP = 5000;
 const isoLevel = 0;
+const interpolateVerts = (v1, v2) => {
+    const t = (isoLevel - v1.w) / (v2.w - v1.w);
+    _v1.set(v1.x, v1.y, v1.z);
+    _v2.set(v2.x, v2.y, v2.z);
+    return _v1.clone().add(_v2.sub(_v1).multiplyScalar(t));
+};
+
 export class TerrainChunk {
     constructor(params) {
         this.params = params;
@@ -42,7 +49,8 @@ export class TerrainChunk {
         // if (!isExist)
         //     buffergeometry.addGroup(offset, length);
 
-        this.yUnitSize = 4;
+        this.yUnitSize = 5;
+        params.resolution = 24;
         this.unitSize = params.width / params.resolution;
         this.segment = params.resolution;
 
@@ -55,6 +63,7 @@ export class TerrainChunk {
         this.hardFloorWeight = 3.05;
         this.noiseWeight = 6.09;
         this.origin = new Vector3(params.offset.x, 0, params.offset.y)
+        this.index = 0;
     }
 
     Destroy() {
@@ -121,17 +130,19 @@ export class TerrainChunk {
         this.vertexs = [];
         this.index = 0;
         this.indexs = [];
+        const halfSeg = this.segment / 2;
 
-        for (let i = 0; i <= this.segment; i++) {
+        for (let i = -halfSeg; i < halfSeg; i++) {
             for (let j = 0; j <= this.segment; j++) {
-                for (let k = 0; k <= this.segment; k++) {
+                for (let k = -halfSeg; k < halfSeg; k++) {
                     this.density(new THREE.Vector3(i, j, k));
                 }
             }
         }
-        for (let i = 0; i < this.segment; i++) {
-            for (let j = 0; j < this.segment; j++) {
-                for (let k = 0; k < this.segment; k++) {
+
+        for (let i = -halfSeg; i < halfSeg; i++) {
+            for (let j = 0; j <= this.segment; j++) {
+                for (let k = -halfSeg; k < halfSeg; k++) {
                     this.March(new THREE.Vector3(i, j, k));
                 }
             }
@@ -145,6 +156,7 @@ export class TerrainChunk {
         this.geometry.setAttribute('position', vf);
         this.geometry.setIndex(new THREE.Uint32BufferAttribute(this.indexs, 1));
         this.geometry.computeVertexNormals();
+        this.geometry.computeBoundingBox();
 
         // this.physicalgeometry = this.geometry.toNonIndexed();
     }
@@ -216,7 +228,7 @@ export class TerrainChunk {
                 if (this.vertexDic[vInx]) {
                     vP = this.vertexDic[vInx];
                 } else {
-                    vP = this.interpolateVerts(cubeCorners[v[0]], cubeCorners[v[1]]);
+                    vP = interpolateVerts(cubeCorners[v[0]], cubeCorners[v[1]]);
                     vP.index = this.index++;
                     this.vertexDic[vInx] = vP;
                     this.vertexs.push(vP);
@@ -280,10 +292,11 @@ export class TerrainChunk {
         this.indexs = [];
 
 
+        const halfSeg = this.segment / 2;
         let count = 0;
-        for (let i = 0; i <= this.segment; i++) {
+        for (let i = -halfSeg; i <= halfSeg; i++) {
             for (let j = 0; j <= this.segment; j++) {
-                for (let k = 0; k <= this.segment; k++) {
+                for (let k = -halfSeg; k <= halfSeg; k++) {
                     this.density(new THREE.Vector3(i, j, k));
                     if (count++ > MAX_STEP) {
                         count = 0
@@ -292,9 +305,9 @@ export class TerrainChunk {
                 }
             }
         }
-        for (let i = 0; i < this.segment; i++) {
+        for (let i = -halfSeg; i < halfSeg; i++) {
             for (let j = 0; j < this.segment; j++) {
-                for (let k = 0; k < this.segment; k++) {
+                for (let k = -halfSeg; k < halfSeg; k++) {
                     this.March(new THREE.Vector3(i, j, k));
                     if (count++ > MAX_STEP) {
                         count = 0
