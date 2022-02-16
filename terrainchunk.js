@@ -8,12 +8,12 @@ export class TerrainChunk {
     }
 
     _Init(params) {
-        const vertices = params.vertices || new Float32Array();
-        const index = params.index || new Uint32Array();
-        const offset = params.offset || 0;
-        const length = params.length || 0;
-        this.vertice = vertices.subarray(offset * 3, (offset + length) * 3);
-        this.index = index.subarray(offset, offset + length);
+        // const vertices = params.vertices || new Float32Array();
+        // const index = params.index || new Uint32Array();
+        // const offset = params.offset || 0;
+        // const length = params.length || 0;
+        // this.vertice = vertices.subarray(offset * 3, (offset + length) * 3);
+        // this.index = index.subarray(offset, offset + length);
 
         // this._plane.castShadow = false;
         // this._plane.receiveShadow = true;
@@ -58,7 +58,7 @@ export class TerrainChunk {
 
     }
 
-    _Rebuild() {
+    *_Rebuild() {
         const output = this.terrain.geoUtils.generateChunk(
             this.params.offset.x, 0, this.params.offset.y, this.params.width,
             this.noiseScale, this.octaves, this.persistence, this.lacunarity, this.floorOffset,
@@ -70,5 +70,6 @@ export class TerrainChunk {
         this.geometry.computeVertexNormals();
 
         this.physicalgeometry = this.geometry.toNonIndexed();
+        yield;
     }
 }

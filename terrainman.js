@@ -82,8 +82,8 @@ export class TerrainMan {
 
     updateVisibleChunk(position) {
         const q = new QuadTree({
-            min: new THREE.Vector2(-32000, -32000),
-            max: new THREE.Vector2(32000, 32000),
+            min: new THREE.Vector2(-16384, -16384),
+            max: new THREE.Vector2(16384, 16384),
         });
 
         q.insert(position);
