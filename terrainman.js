@@ -87,8 +87,7 @@ export class TerrainMan {
         });
 
         q.insert(position);
-
-
+ 
         const children = q.getChildren();
 
         let newTerrainChunks = {};
