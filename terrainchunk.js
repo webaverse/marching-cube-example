@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { terrainMaterial } from './material.js';
 export class TerrainChunk {
     constructor(params) {
-        this._params = params;
+        this.params = params;
         this.terrain = params.terrainM;
         this._Init(params);
     }
@@ -22,7 +22,7 @@ export class TerrainChunk {
         this._plane.rotation.x = -Math.PI / 2;
 
         // const buffergeometry = params.buffergeometry || new THREE.BufferGeometry();
-        this.buffergeometry = new THREE.BufferGeometry();
+        this.geometry = new THREE.BufferGeometry();
         // const isExist = false;
         // for (let i = 0; i < buffergeometry.groups.length; i++) {
         //     const group = buffergeometry.groups[i];
@@ -55,7 +55,7 @@ export class TerrainChunk {
 
     _Rebuild() { 
         const output = this.terrain.geoUtils.generateChunk(
-            this.offset.x, 0, this.offset.y, this.params.width,
+            this.params.offset.x, 0, this.params.offset.y, this.params.width,
             this.noiseScale, this.octaves, this.persistence, this.lacunarity, this.floorOffset,
             this.hardFloor, this.hardFloorWeight, this.noiseWeight
         );
