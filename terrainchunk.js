@@ -62,7 +62,8 @@ export class TerrainChunk {
         this.hardFloor = 2.0;
         this.hardFloorWeight = 3.05;
         this.noiseWeight = 6.09;
-        this.origin = new Vector3(params.offset.x, 0, params.offset.y)
+        this.origin = new Vector3(params.offset.x, 0, params.offset.y);
+        this._mesh.position.set(params.offset.x, 0, params.offset.y);
         this.index = 0;
     }
 
@@ -120,7 +121,7 @@ export class TerrainChunk {
             //     finalVal = finalVal * (1 - edgeWeight) - 100 * edgeWeight;
         }
         var index = this.indexFromCoord(vec.x, vec.y, vec.z);
-        this.points[index] = new THREE.Vector4(curPos.x, curPos.y, curPos.z, finalVal);
+        this.points[index] = new THREE.Vector4(curPos.x - this.origin.x, curPos.y, curPos.z - this.origin.z, finalVal);
         // this.min.min(this.points[index]);
         // this.max.max(this.points[index]);
     }

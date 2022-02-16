@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import { Uint32BufferAttribute } from 'three';
 import { terrainMaterial } from './material.js';
 import { QuadTree } from "./quadtree.js";
 import { TerrainChunkRebuilder } from "./terrainrebuild.js";
