@@ -3,7 +3,7 @@ import { MeshPhongMaterial, TextureLoader, Vector4 } from 'three';
 
 export const terrainMaterial = new MeshPhongMaterial({ color: 0xffffff });
 export const terrainMaterials = [
-    new MeshPhongMaterial({ color: 0xfffffb, wireframe: true, uniforms: { a: { value: 0 } } }),
+    new MeshPhongMaterial({ color: 0xfffffb, wireframe: true }),
     new MeshPhongMaterial({ color: 0xfffffc, wireframe: true }),
     new MeshPhongMaterial({ color: 0xfffffd, wireframe: true }),
     new MeshPhongMaterial({ color: 0xfffffe, wireframe: true }),
@@ -19,11 +19,10 @@ grassTexture.wrapS = THREE.RepeatWrapping;
 grassTexture.wrapT = THREE.RepeatWrapping;
 rockTexture.wrapS = THREE.RepeatWrapping;
 rockTexture.wrapT = THREE.RepeatWrapping;
-terrainMaterials.forEach(material => {
-    material.onBeforeCompile = (shader, renderer) => {
-        material.shader = shader;
-        shader.vertexShader =
-            `
+terrainMaterial.onBeforeCompile = (shader, renderer) => {
+    terrainMaterial.shader = shader;
+    shader.vertexShader =
+        `
 #define PHONG
 varying vec3 vViewPosition;
 #include <common>
@@ -75,8 +74,8 @@ void main() {
     #include <shadowmap_vertex>
     #include <fog_vertex>
 }`;
-        shader.fragmentShader =
-            `
+    shader.fragmentShader =
+        `
 #define PHONG
 uniform vec3 diffuse;
 uniform vec3 emissive;
@@ -186,28 +185,27 @@ void main() {
     #include <dithering_fragment>
 }`  ;
 
-        shader.defines = shader.defines || {};
-        shader.uniforms.grassTexture = { value: grassTexture };
-        shader.uniforms.rockTexture = { value: rockTexture };
-        shader.uniforms.bbox = { value: new Vector4() };
-        // if (material.bbox)
-        // { 
-        //     shader.uniforms.bbox.value.copy(material.bbox);
-        // }
-        terrainMaterial.uniforms = shader.uniforms;
-        shader.defines['USE_TRIPLANETEXTURE'] = '';
-    }
+    shader.defines = shader.defines || {};
+    shader.uniforms.grassTexture = { value: grassTexture };
+    shader.uniforms.rockTexture = { value: rockTexture };
+    shader.uniforms.bbox = { value: new Vector4() };
+    // if (terrainMaterial.bbox)
+    // { 
+    //     shader.uniforms.bbox.value.copy(terrainMaterial.bbox);
+    // }
+    terrainMaterial.uniforms = shader.uniforms;
+    shader.defines['USE_TRIPLANETEXTURE'] = '';
+}
 
-    material.onBeforeRender = (renderer) => {
-        if (!material.shader)
-            return;
+terrainMaterial.onBeforeRender = (renderer) => {
+    if (!terrainMaterial.shader)
+        return;
 
-        // const shader = material.shader;
-        // if (shader.uniforms && material.bbox && !shader.uniforms.bbox.value.equals(material.bbox)) {
-        //     shader.uniforms.bbox.value.copy(material.bbox);
-        // }
-    }
-})
+    // const shader = terrainMaterial.shader;
+    // if (shader.uniforms && terrainMaterial.bbox && !shader.uniforms.bbox.value.equals(terrainMaterial.bbox)) {
+    //     shader.uniforms.bbox.value.copy(terrainMaterial.bbox);
+    // }
+}
 //     new THREE.ShaderMaterial({
 //     vertexShader: vs,
 //     fragmentShader: fs,

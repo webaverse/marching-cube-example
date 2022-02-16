@@ -1,13 +1,13 @@
-
 import * as THREE from 'three'
-import * as OrbitControls from "three/examples/jsm/controls/OrbitControls";
-import Terrain from "./terrain.js"; 
+import * as OrbitControls from "three/examples/jsm/controls/OrbitControls"; 
+import { TerrainMan } from './terrainman.js';
 const app = document.querySelector('#app');
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 3000);
 const controls = new OrbitControls.OrbitControls(camera, renderer.domElement);
+const terrainManger = new TerrainMan();
 function init() {
   camera.position.y = 100.1;
   camera.position.z = 0.01;
@@ -20,14 +20,12 @@ function init() {
     camera.updateProjectionMatrix();
   });
   app.append(renderer.domElement);
-  const terrain = new Terrain();
-  terrain.updateView(new THREE.Vector3());
+  terrainManger.update(new THREE.Vector3());
 
   controls.addEventListener('change', (ev) => {
-    terrain.updateView(ev.target.object.position)
   })
 
-  scene.add(terrain);
+  scene.add(terrainManger.object);
   scene.add(new THREE.Mesh(new THREE.BoxBufferGeometry(5, 100, 5), new THREE.MeshBasicMaterial({ color: 0xafaf00 })));
   scene.add(new THREE.AxesHelper(10000));
   const dirLight = new THREE.DirectionalLight(0xcfcfcf);
@@ -36,6 +34,7 @@ function init() {
   scene.add(new THREE.HemisphereLight(0xafafaf, 0x555555));
 }
 function loop() {
+  terrainManger.update(camera.position)
   renderer.render(scene, camera);
   requestAnimationFrame(loop);
 }
