@@ -38,6 +38,7 @@ export class TerrainMan {
         this.init();
         this.geometry = new THREE.BufferGeometry();
         this.object = new THREE.Mesh(this.geometry, terrainMaterial);
+        this._group = new THREE.Group();
 
         this.chunkLength = 64 * 64 * 16;
         this.vertices = new Float32Array(this.chunkLength * 3 * 200);

@@ -7,7 +7,7 @@ export class TerrainChunk {
         this._Init(params);
     }
 
-    _Init(params) {  
+    _Init(params) {
         const vertices = params.vertices || new Float32Array();
         const index = params.index || new Uint32Array();
         const offset = params.offset || 0;
@@ -15,14 +15,15 @@ export class TerrainChunk {
         this.vertice = vertices.subarray(offset * 3, (offset + length) * 3);
         this.index = index.subarray(offset, offset + length);
 
-        this._plane = new THREE.Mesh(
-            terrainMaterial);
-        this._plane.castShadow = false;
-        this._plane.receiveShadow = true;
-        this._plane.rotation.x = -Math.PI / 2;
+        // this._plane.castShadow = false;
+        // this._plane.receiveShadow = true;
+        // this._plane.rotation.x = -Math.PI / 2;
 
         // const buffergeometry = params.buffergeometry || new THREE.BufferGeometry();
         this.geometry = new THREE.BufferGeometry();
+        this._mesh = new THREE.Mesh(this.geometry, terrainMaterial);
+        params.group.add(this._mesh);
+
         // const isExist = false;
         // for (let i = 0; i < buffergeometry.groups.length; i++) {
         //     const group = buffergeometry.groups[i];
@@ -32,7 +33,7 @@ export class TerrainChunk {
         // }
         // if (!isExist)
         //     buffergeometry.addGroup(offset, length);
- 
+
         this.yUnitSize = 4;
 
         this.noiseScale = 3;
@@ -45,6 +46,10 @@ export class TerrainChunk {
         this.noiseWeight = 6.09;
     }
 
+    Destroy() {
+        this.params.group.remove(this._mesh);
+    }
+
     Hide() {
 
     }
@@ -53,7 +58,7 @@ export class TerrainChunk {
 
     }
 
-    _Rebuild() { 
+    _Rebuild() {
         const output = this.terrain.geoUtils.generateChunk(
             this.params.offset.x, 0, this.params.offset.y, this.params.width,
             this.noiseScale, this.octaves, this.persistence, this.lacunarity, this.floorOffset,

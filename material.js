@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { MeshPhongMaterial, TextureLoader, Vector4 } from 'three';
 
-export const terrainMaterial = new MeshPhongMaterial({ color: 0xffffff });
+export const terrainMaterial = new MeshPhongMaterial({ color: 0xffffff, wireframe: true });
 export const terrainMaterials = [
     new MeshPhongMaterial({ color: 0xfffffb, wireframe: true }),
     new MeshPhongMaterial({ color: 0xfffffc, wireframe: true }),

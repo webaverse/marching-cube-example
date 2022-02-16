@@ -12,7 +12,8 @@ export default () => {
     const rootScene = new THREE.Object3D();
     const geoUtils = useGeometryUtils();
     const terrain = new TerrainMan(geoUtils);
-    rootScene.add(terrain.object);
+    // terrain._group.y = -100
+    rootScene.add(terrain._group);
 
     let physicsIds = [];
     // terrain.children.forEach(mesh => {
