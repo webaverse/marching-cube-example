@@ -295,7 +295,7 @@ export class TerrainChunk {
         // this.geometry.attributes.position.needsUpdate = true;
         // this.geometry.index.needsUpdate = true;
 
-        this.physicalgeometry = this.geometry.toNonIndexed();
+        // this.physicalgeometry = this.geometry.toNonIndexed();
 
         this.vertexDic = {};
         this.points = [];
