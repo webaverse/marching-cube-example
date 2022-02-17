@@ -7,6 +7,12 @@ function genKey(c) {
     return c.position[0] + '/' + c.position[1] + ' [' + c.dimensions[0] + ']';
 }
 
+/**
+ * 计算交叉部分
+ * @param {*} dictA 
+ * @param {*} dictB 
+ * @returns 
+ */
 const DictIntersection = (dictA, dictB) => {
     const intersection = {};
     for (let k in dictB) {
@@ -17,6 +23,12 @@ const DictIntersection = (dictA, dictB) => {
     return intersection
 }
 
+/**
+ * dictA中删除dictB所有的值
+ * @param {*} dictA 
+ * @param {*} dictB 
+ * @returns 
+ */
 const DictDifference = (dictA, dictB) => {
     const diff = { ...dictA };
     for (let k in dictB) {
@@ -31,9 +43,9 @@ const _MIN_CELL_SIZE = 500;
 const _FIXED_GRID_SIZE = 10;
 const _MIN_CELL_RESOLUTION = 64;
 
-export class TerrainMan {
+export class TerrainManager {
     constructor(geoUtils) {
-        this.geoUtils = geoUtils;
+        this.geoUtils = geoUtils;//
         this.init();
         this.geometry = new THREE.BufferGeometry();
         this.object = new THREE.Mesh(this.geometry, terrainMaterial);
@@ -49,7 +61,7 @@ export class TerrainMan {
     }
 
     init() {
-        this._builder = new TerrainChunkRebuilder();
+        this._builder = new TerrainChunkRebuilder({ tm: this });
 
         this.initTerrain();
     }
@@ -79,6 +91,14 @@ export class TerrainMan {
             this.updateVisibleChunk(position)
     }
 
+    countDic(dic) {
+        let i = 0;
+        for (const key in dic) {
+            i++;
+        }
+        return i;
+    }
+
     updateVisibleChunk(position) {
         const q = new QuadTree({
             min: new THREE.Vector2(-16384, -16384),
@@ -86,13 +106,16 @@ export class TerrainMan {
         });
 
         q.insert(position);
- 
+
         const children = q.getChildren();
 
         let newTerrainChunks = {};
         const center = new THREE.Vector2();
         const dimensions = new THREE.Vector2();
+
+        let newChunkLen = 0;
         for (let c of children) {
+            newChunkLen++
             c.bounds.getCenter(center);
             c.bounds.getSize(dimensions);
 
@@ -105,10 +128,19 @@ export class TerrainMan {
             const k = genKey(child);
             newTerrainChunks[k] = child;
         }
+        // console.log('new chunk length:' + newChunkLen);
 
+        const cnewTerrainChunks = this.countDic(newTerrainChunks)
+        const c_chunks = this.countDic(this._chunks)
         const intersection = DictIntersection(this._chunks, newTerrainChunks);
         const difference = DictDifference(newTerrainChunks, this._chunks);
         const recycle = Object.values(DictDifference(this._chunks, newTerrainChunks));
+
+        const cintersection = this.countDic(intersection)
+        const cdifference = this.countDic(difference)
+        const crecycle = this.countDic(recycle)
+        if (cdifference > 0)
+            console.log(cnewTerrainChunks, c_chunks, cintersection, cdifference, crecycle)
 
         this._builder._old.push(...recycle);
 
@@ -124,7 +156,14 @@ export class TerrainMan {
             };
         }
 
+        this._builder.sort();
+
         this._chunks = newTerrainChunks;
+        let le = 0
+        for (const key in this._chunks) {
+            le++
+        }
+        // console.log([le, this._group.children.length]);
     }
 
 }

@@ -17,9 +17,17 @@ const interpolateVerts = (v1, v2) => {
 
 export class TerrainChunk {
     constructor(params) {
-        this.params = params;
+        this._params = params;
         this.terrain = params.terrainM;
         this._Init(params);
+    }
+    set params(val) {
+        this._params = val;
+        this._Init(val);
+    }
+
+    get params() {
+        return this._params;
     }
 
     _Init(params) {
@@ -28,16 +36,15 @@ export class TerrainChunk {
         // const offset = params.offset || 0;
         // const length = params.length || 0;
         // this.vertice = vertices.subarray(offset * 3, (offset + length) * 3);
-        // this.index = index.subarray(offset, offset + length);
-
-        // this._plane.castShadow = false;
-        // this._plane.receiveShadow = true;
-        // this._plane.rotation.x = -Math.PI / 2;
-
+        // this.index = index.subarray(offset, offset + length); 
         // const buffergeometry = params.buffergeometry || new THREE.BufferGeometry();
         this.geometry = new THREE.BufferGeometry();
         this._mesh = new THREE.Mesh(this.geometry, terrainMaterial);
-        params.group.add(this._mesh);
+
+        if (params.group.children.indexOf(this._mesh) === -1)
+            params.group.add(this._mesh);
+        else
+            debugger
 
         // const isExist = false;
         // for (let i = 0; i < buffergeometry.groups.length; i++) {
@@ -63,20 +70,20 @@ export class TerrainChunk {
         this.hardFloorWeight = 3.05;
         this.noiseWeight = 6.09;
         this.origin = new Vector3(params.offset.x, 0, params.offset.y);
-        this._mesh.position.set(params.offset.x, 0, params.offset.y);
+        // this._mesh.position.set(params.offset.x, 0, params.offset.y);
         this.index = 0;
     }
 
     Destroy() {
-        this.params.group.remove(this._mesh);
+        this._params.group.remove(this._mesh);
     }
 
     Hide() {
-
+        this._mesh.visible = false;
     }
 
     Show() {
-
+        this._mesh.visible = true;
     }
 
     density(vec, noiseScale = 3, octaves = 8, persistence = 1.15, lacunarity = 1.6, floorOffset = 20, hardFloor = 2, hardFloorWeight = 3.05, noiseWeight = 6.09) {
@@ -121,7 +128,7 @@ export class TerrainChunk {
             //     finalVal = finalVal * (1 - edgeWeight) - 100 * edgeWeight;
         }
         var index = this.indexFromCoord(vec.x, vec.y, vec.z);
-        this.points[index] = new THREE.Vector4(curPos.x - this.origin.x, curPos.y, curPos.z - this.origin.z, finalVal);
+        this.points[index] = new THREE.Vector4(curPos.x, curPos.y, curPos.z, finalVal);
         // this.min.min(this.points[index]);
         // this.max.max(this.points[index]);
     }
@@ -284,7 +291,11 @@ export class TerrainChunk {
         // this.geometry.setIndex(new THREE.Uint32BufferAttribute(output.faces, 1));
         // this.geometry.computeVertexNormals();
 
-        // this.physicalgeometry = this.geometry.toNonIndexed();
+        // this.geometry.attributes.normal.needsUpdate = true;
+        // this.geometry.attributes.position.needsUpdate = true;
+        // this.geometry.index.needsUpdate = true;
+
+        this.physicalgeometry = this.geometry.toNonIndexed();
 
         this.vertexDic = {};
         this.points = [];
@@ -301,7 +312,7 @@ export class TerrainChunk {
                     this.density(new THREE.Vector3(i, j, k));
                     if (count++ > MAX_STEP) {
                         count = 0
-                        yield;
+                        // yield;
                     }
                 }
             }
@@ -312,7 +323,7 @@ export class TerrainChunk {
                     this.March(new THREE.Vector3(i, j, k));
                     if (count++ > MAX_STEP) {
                         count = 0
-                        yield;
+                        // yield;
                     }
                 }
             }
@@ -323,11 +334,14 @@ export class TerrainChunk {
             const p = this.vertexs[i];
             vs.push(p.x, p.y, p.z);
         }
-        debugger
+
         const vf = new THREE.Float32BufferAttribute(vs, 3);
         this.geometry.setAttribute('position', vf);
         this.geometry.setIndex(new THREE.Uint32BufferAttribute(this.indexs, 1));
         this.geometry.computeVertexNormals();
+        this.geometry.attributes.normal.needsUpdate = true;
+        this.geometry.attributes.position.needsUpdate = true;
+        this.geometry.index.needsUpdate = true;
         yield;
     }
 }

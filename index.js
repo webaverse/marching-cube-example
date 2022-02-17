@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import metaversefile from 'metaversefile'
-import { TerrainMan } from './terrainman.js';
+import { TerrainManager } from './terrainman.js';
 
 const { useFrame, useLocalPlayer, useLoaders, useUi, usePhysics, useCleanup, useGeometryUtils } = metaversefile;
 
@@ -11,7 +11,7 @@ export default () => {
 
     const rootScene = new THREE.Object3D();
     const geoUtils = useGeometryUtils();
-    const terrain = new TerrainMan(geoUtils);
+    const terrain = new TerrainManager(geoUtils);
     // terrain._group.y = -100
     rootScene.add(terrain._group);
 

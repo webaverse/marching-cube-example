@@ -1,14 +1,14 @@
 
 import * as THREE from 'three'
 import * as OrbitControls from "three/examples/jsm/controls/OrbitControls";
-import { TerrainMan } from './terrainman.js';
+import { TerrainManager } from './terrainman.js';
 const app = document.querySelector('#app');
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 3000);
 const controls = new OrbitControls.OrbitControls(camera, renderer.domElement);
-const terrainManger = new TerrainMan(); 
+const terrainManger = new TerrainManager(); 
 function init() {
   camera.position.y = 100.1;
   camera.position.z = 0.01;
