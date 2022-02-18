@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>WASM Test for Marching Cubes</title>
+</head>
+<body>
+	<button id="button">Run Test (See console)</button>
+	<div id="container"></div>
+	<script type="module">
+		import Module from './geometry.js';
+		import * as THREE from './three.module.js';
+		import { OrbitControls } from './OrbitControls.js';
+		import { TerrainManager } from './terrain-manager.js';
+
+		let moduleInstance = Module;
+
+		var scene, camera, renderer, width, height;
+
+		var terrainManager = new TerrainManager(200, 1, moduleInstance);
+
+		class Allocator {
+			constructor() {
+				this.offsets = [];
+			}
+
+			alloc(constructor, size) {
+				if (size > 0) {
+					const offset = moduleInstance._malloc(size * constructor.BYTES_PER_ELEMENT);
+					const b = new constructor(moduleInstance.HEAP8.buffer, moduleInstance.HEAP8.byteOffset + offset, size);
+					b.offset = offset;
+					this.offsets.push(offset);
+					return b;
+				} else {
+					return new constructor(moduleInstance.HEAP8.buffer, 0, 0);
+				}
+			}
+
+			freeAll() {
+				for (let i = 0; i < this.offsets.length; i++) {
+					moduleInstance._doFree(this.offsets[i]);
+				}
+				this.offsets.length = 0;
+			}
+		}
+
+		function marchingCubes(dims, potential, shift, scale) {
+			let allocator = new Allocator();
+
+			const dimsTypedArray = allocator.alloc(Int32Array, 3);
+			dimsTypedArray.set(dims);
+
+			const potentialTypedArray = allocator.alloc(Float32Array, potential.length);
+			potentialTypedArray.set(potential);
+
+			const shiftTypedArray = allocator.alloc(Float32Array, 3);
+			shiftTypedArray.set(shift);
+
+			const scaleTypedArray = allocator.alloc(Float32Array, 3);
+			scaleTypedArray.set(scale);
+
+			const outputBuffer = moduleInstance._doMarchingCubes(
+				dimsTypedArray.byteOffset,
+				potentialTypedArray.byteOffset,
+				shiftTypedArray.byteOffset,
+				scaleTypedArray.byteOffset
+			);
+
+			allocator.freeAll();
+
+			const head = outputBuffer / 4;
+
+			const positionCount = moduleInstance.HEAP32.subarray(head, head + 1)[0];
+			const faceCount = moduleInstance.HEAP32.subarray(head + 1, head + 2)[0];
+			const positions = moduleInstance.HEAPF32.subarray(head + 2, head + 2 + positionCount);
+			const faces = moduleInstance.HEAP32.subarray(head + 2 + positionCount, head + 2 + positionCount +faceCount);
+
+			return {
+				positionCount: positionCount,
+				faceCount: faceCount,
+				positions: positions,
+				faces: faces
+			}
+		}
+
+		function generateChunk() {
+
+			// const outputBuffer = moduleInstance._generateChunk(
+			// 	x, y, z, size
+			// 	// 3, 8, 1.15, 1.6, 20.0, 2.0, 3.06, 6.09
+			// );
+
+			// const levelCount = 3;
+			const maxSegment = 32;
+			const chunkCount = 3;
+
+			const outputBuffer = moduleInstance._generateTerrain(200, chunkCount, maxSegment);
+
+			const head = outputBuffer / 4;
+
+			// const positionCount = moduleInstance.HEAP32.subarray(head, head + 1)[0];
+			// const faceCount = moduleInstance.HEAP32.subarray(head + 1, head + 2)[0];
+			const positionCount = chunkCount * chunkCount * maxSegment * maxSegment * 20;
+			const faceCount = chunkCount * chunkCount * maxSegment * maxSegment * 20;
+
+			const positionBuffer = moduleInstance.HEAP32.subarray(head + 0, head + 1)[0];
+			const faceBuffer = moduleInstance.HEAP32.subarray(head + 1, head + 2)[0];
+			const groupBuffer = moduleInstance.HEAP32.subarray(head + 2, head + 3)[0];
+			const positions = moduleInstance.HEAPF32.subarray(positionBuffer / 4, positionBuffer / 4 + positionCount * 3);
+			const faces = moduleInstance.HEAP32.subarray(faceBuffer / 4, faceBuffer / 4 + faceCount);
+			const groups = moduleInstance.HEAP32.subarray(groupBuffer / 4, groupBuffer / 4 + chunkCount * chunkCount * 2);
+
+			// const positions = moduleInstance.HEAPF32.subarray(head + 2, head + 2 + positionCount);
+			// const faces = moduleInstance.HEAP32.subarray(head + 2 + positionCount, head + 2 + positionCount +faceCount);
+
+			return {
+				positionCount: positionCount,
+				faceCount: faceCount,
+				positions: positions,
+				faces: faces,
+				groups: groups
+			};
+		}
+
+		function addChunk(x, y, z, size) {
+
+			terrainManager.init();
+
+			scene.add(terrainManager.mesh);
+
+			// const output = generateChunk();
+
+			// console.log(">>> position count: ", output.positionCount);
+			// console.log(">>> face count: ", output.faceCount);
+			// console.log(">>> positions: ", output.positions);
+			// console.log(">>> faces: ", output.faces);
+			// console.log(">>> groups: ", output.groups);
+
+			// let geometry = new THREE.BufferGeometry();
+			// geometry.setIndex(new THREE.Uint32BufferAttribute(output.faces, 1));
+			// geometry.setAttribute('position', new THREE.Float32BufferAttribute(output.positions, 3));
+
+			// let l = output.faces.slice(20480, 20486);
+			// console.log(">>> indice: ", output.faces.slice(20480, 20486));
+			// for (let i = 0; i < 6; i++) {
+			// 	console.log(">>> pos: ", output.positions[l[i] * 3 + 0], output.positions[l[i] * 3 + 1], output.positions[l[i] * 3 + 2]);
+			// 	let testMesh = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
+			// testMesh.position.set(output.positions[l[i] * 3 + 0], output.positions[l[i] * 3 + 1], output.positions[l[i] * 3 + 2]);
+			// scene.add(testMesh);
+			// }
+
+			// geometry.clearGroups();
+
+			// for (let i = 0; i < 3 * 3; i++) {
+			// 	geometry.addGroup(output.groups[2 * i], output.groups[2 * i + 1], 0);
+			// }
+
+			// scene.add(new THREE.Mesh(
+			// 	geometry,
+			// 	[new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide, wireframe: false })]
+			// ));
+
+			// scene.add(new THREE.Mesh(
+			// 	geometry,
+			// 	[new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, wireframe: true })]
+			// ));
+		}
+
+		document.getElementById('button').addEventListener('click', () => {
+			// var result = Module.ccall('doMarchingingCubes', null, null, null);
+			const dims = [32, 32, 32];
+			const shift = [0, 0, 0];
+			const scale = [1.0, 1.0, 1.0];
+			let potential = [];
+
+			const center = new THREE.Vector3(...dims).multiplyScalar(0.5);
+
+			for (let x = 0; x < dims[0]; x++) {
+				for (let y = 0; y < dims[1]; y++) {
+					for (let z = 0; z < dims[2]; z++) {
+						potential[x * dims[0] * dims[1] + y * dims[0] + z] = -1;
+						if (new THREE.Vector3(x, y, z).distanceTo(center) < dims[0] / 2 - 1) {
+							potential[x * dims[0] * dims[1] + y * dims[0] + z] = new THREE.Vector3(x, y, z).distanceTo(center);
+						}
+					}
+				}
+			}
+
+
+			// const output = marchingCubes(dims, potential, shift, scale);
+
+			addChunk(0, 0, 0, 200);
+			// addChunk(200, 0, 0, 200);
+			// addChunk(-200, 0, 0, 200);
+			// addChunk(-400, 0, 0, 200);
+			// addChunk(0, 0, -200, 200);
+			// addChunk(-200, 0, -200, 200);
+
+		});
+
+		width = 1024;
+		height = 768;
+
+		scene = new THREE.Scene();
+
+		camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 5000);
+		camera.position.set(0, 200, 0);
+
+		var container = document.getElementById( 'container' );
+
+		renderer = new THREE.WebGLRenderer({ antialias: true });
+		renderer.setPixelRatio( window.devicePixelRatio );
+		renderer.setSize(width, height);
+
+		container.appendChild(renderer.domElement);
+
+		renderer.setAnimationLoop(() => {
+			// console.log(">>> camera position: ", camera.position);
+			terrainManager.updateCenter(camera.position);
+			terrainManager.updateChunk();
+			renderer.render(scene, camera);
+		});
+
+		var box = new THREE.Mesh(
+			new THREE.BoxGeometry(1, 1), new THREE.MeshBasicMaterial({ color: 0x0000ff, wireframe: true })
+		);
+		scene.add(box);
+
+		var controls = new OrbitControls(camera, renderer.domElement);
+	</script>
+</body>
+</html>
