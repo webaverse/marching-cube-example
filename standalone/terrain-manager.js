@@ -31,17 +31,26 @@ export class TerrainManager {
 		const positionCount = this.chunkCount * this.chunkCount * maxSegment * maxSegment * 20;
 		const faceCount = this.chunkCount * this.chunkCount * maxSegment * maxSegment * 20;
 
-		const positionBuffer = this.moduleInstance.HEAP32.subarray(head + 0, head + 1)[0];
-		const faceBuffer = this.moduleInstance.HEAP32.subarray(head + 1, head + 2)[0];
-		const groupBuffer = this.moduleInstance.HEAP32.subarray(head + 2, head + 3)[0];
+		this.positionBuffer = this.moduleInstance.HEAP32.subarray(head + 0, head + 1)[0];
+		this.faceBuffer = this.moduleInstance.HEAP32.subarray(head + 1, head + 2)[0];
+		this.groupBuffer = this.moduleInstance.HEAP32.subarray(head + 2, head + 3)[0];
 
-		this.positions = this.moduleInstance.HEAPF32.subarray(positionBuffer / 4, positionBuffer / 4 + positionCount * 3);
-		this.faces = this.moduleInstance.HEAP32.subarray(faceBuffer / 4, faceBuffer / 4 + faceCount);
-		this.groups = this.moduleInstance.HEAP32.subarray(groupBuffer / 4, groupBuffer / 4 + this.chunkCount * this.chunkCount * 2);
+		this.positions = this.moduleInstance.HEAPF32.subarray(this.positionBuffer / 4, this.positionBuffer / 4 + positionCount * 3);
+		this.faces = this.moduleInstance.HEAP32.subarray(this.faceBuffer / 4, this.faceBuffer / 4 + faceCount);
+		this.groups = this.moduleInstance.HEAP32.subarray(this.groupBuffer / 4, this.groupBuffer / 4 + this.chunkCount * this.chunkCount * 2);
 
 		this.geometry = new THREE.BufferGeometry();
-		this.geometry.setIndex(new THREE.Uint32BufferAttribute(this.faces, 1));
-		this.geometry.setAttribute('position', new THREE.Float32BufferAttribute(this.positions, 3));
+		this.indexAttribute = new THREE.Uint32BufferAttribute(this.faces, 1);
+		this.indexAttribute.setUsage( THREE.DynamicDrawUsage );
+
+		this.positionAttribute = new THREE.Float32BufferAttribute(this.positions, 3);
+		this.positionAttribute.setUsage( THREE.DynamicDrawUsage );
+
+		this.indexAttribute.onUploadCallback = () => { console.log(">>> index: uploaded")};
+		this.positionAttribute.onUploadCallback = () => { console.log(">>> position: uploaded")};
+
+		this.geometry.setIndex(this.indexAttribute);
+		this.geometry.setAttribute('position', this.positionAttribute);
 
 		this.geometry.clearGroups();
 
@@ -100,6 +109,27 @@ export class TerrainManager {
 
 	_updateChunkGeometry(index, chunkOrigin) {
 
+		console.log(">>> update chunk index: ", index);
+
+		let stride = 32 * 32 * 20;
+
+		this.moduleInstance._updateChunk(
+			this.positionBuffer, this.faceBuffer, this.groupBuffer, chunkOrigin.x, chunkOrigin.y, chunkOrigin.z,
+			this.chunkSize, 32, index, index * stride, index * stride
+		);
+
+		this.indexAttribute.updateRange = { offset: index * stride, count: stride };
+		this.indexAttribute.needsUpdate = true;
+
+		this.positionAttribute.updateRange = { offset: index * stride * 3, count: stride * 3};
+		this.positionAttribute.needsUpdate = true;
+
+
+		this.geometry.clearGroups();
+
+		for (let i = 0; i < this.chunkCount * this.chunkCount; i++) {
+			this.geometry.addGroup(this.groups[2 * i], this.groups[2 * i + 1], 0);
+		}
 	}
 
 }
