@@ -9,6 +9,7 @@
 	<button id="button">Run Test (See console)</button>
 	<div id="container"></div>
 	<script type="module">
+
 		import Module from './geometry.js';
 		import * as THREE from './three.module.js';
 		import { OrbitControls } from './OrbitControls.js';
@@ -30,9 +31,16 @@
 		height = 768;
 
 		scene = new THREE.Scene();
+		scene.background = new THREE.Color(0, 1, 0);
 
 		camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 5000);
 		camera.position.set(0, 200, 0);
+
+		const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+		dirLight.position.set(200, 200, 200);
+
+		scene.add(dirLight);
+
 
 		var container = document.getElementById( 'container' );
 
@@ -55,6 +63,7 @@
 		scene.add(box);
 
 		var controls = new OrbitControls(camera, renderer.domElement);
+
 	</script>
 </body>
 </html>

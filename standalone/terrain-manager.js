@@ -13,6 +13,8 @@ export class TerrainManager {
 
 		this.targetChunkIds = this._calculateTargetChunks();
 		this.currentChunkIds = [...this.targetChunkIds];
+
+		this.segment = 32;
 	}
 
 	init() {
@@ -22,22 +24,24 @@ export class TerrainManager {
 
 	_generateBuffers() {
 
-		const maxSegment = 32;
-
-		const outputBuffer = this.moduleInstance._generateTerrain(200, this.chunkCount, maxSegment);
+		const outputBuffer = this.moduleInstance._generateTerrain(200, this.chunkCount, this.segment);
 
 		const head = outputBuffer / 4;
 
-		const positionCount = this.chunkCount * this.chunkCount * maxSegment * maxSegment * 20;
-		const faceCount = this.chunkCount * this.chunkCount * maxSegment * maxSegment * 20;
+		const positionCount = this.chunkCount * this.chunkCount * this.segment * this.segment * 20;
+		const faceCount = this.chunkCount * this.chunkCount * this.segment * this.segment * 20;
 
 		this.positionBuffer = this.moduleInstance.HEAP32.subarray(head + 0, head + 1)[0];
-		this.faceBuffer = this.moduleInstance.HEAP32.subarray(head + 1, head + 2)[0];
-		this.groupBuffer = this.moduleInstance.HEAP32.subarray(head + 2, head + 3)[0];
+		this.normalBuffer = this.moduleInstance.HEAP32.subarray(head + 1, head + 2)[0];
+		this.faceBuffer = this.moduleInstance.HEAP32.subarray(head + 2, head + 3)[0];
+		this.groupBuffer = this.moduleInstance.HEAP32.subarray(head + 3, head + 4)[0];
 
 		this.positions = this.moduleInstance.HEAPF32.subarray(this.positionBuffer / 4, this.positionBuffer / 4 + positionCount * 3);
+		this.normals = this.moduleInstance.HEAPF32.subarray(this.normalBuffer / 4, this.normalBuffer / 4 + positionCount * 3);
 		this.faces = this.moduleInstance.HEAPU32.subarray(this.faceBuffer / 4, this.faceBuffer / 4 + faceCount);
 		this.groups = this.moduleInstance.HEAP32.subarray(this.groupBuffer / 4, this.groupBuffer / 4 + this.chunkCount * this.chunkCount * 2);
+
+		console.log(">>> positions: ", this.positions);
 
 		this.geometry = new THREE.BufferGeometry();
 
@@ -53,8 +57,15 @@ export class TerrainManager {
 		this.positionAttribute.count = this.positions.length / 3;
 		this.positionAttribute.setUsage( THREE.DynamicDrawUsage );
 
+		this.normalAttribute = new THREE.Float32BufferAttribute();
+		this.normalAttribute.array = this.normals;
+		this.normalAttribute.itemSize = 3;
+		this.normalAttribute.count = this.normals.length / 3;
+		this.normalAttribute.setUsage( THREE.DynamicDrawUsage );
+
 		this.geometry.setIndex(this.indexAttribute);
 		this.geometry.setAttribute('position', this.positionAttribute);
+		this.geometry.setAttribute('normal', this.normalAttribute);
 
 		this.geometry.clearGroups();
 
@@ -62,7 +73,7 @@ export class TerrainManager {
 			this.geometry.addGroup(this.groups[2 * i], this.groups[2 * i + 1], 0);
 		}
 
-		this.mesh = new THREE.Mesh(this.geometry, [new THREE.MeshBasicMaterial({ color: 0xff0000 })]);
+		this.mesh = new THREE.Mesh(this.geometry, [new THREE.MeshLambertMaterial({ color: 0xff0000 })]);
 	}
 
 	_calculateTargetChunks() {
@@ -115,11 +126,12 @@ export class TerrainManager {
 
 		console.log(">>> update chunk index: ", index);
 
-		let stride = 32 * 32 * 20;
+		let stride = this.segment * this.segment * 20;
 
 		this.moduleInstance._updateChunk(
-			this.positions.byteOffset, this.geometry.index.array.byteOffset, this.groups.byteOffset, chunkOrigin.x, chunkOrigin.y, chunkOrigin.z,
-			this.chunkSize, 32, index, index * stride, index * stride
+			this.positionBuffer, this.normalBuffer, this.faceBuffer, this.groupBuffer,
+			chunkOrigin.x, chunkOrigin.y, chunkOrigin.z,
+			this.chunkSize, this.segment, index, index * stride, index * stride
 		);
 
 		this.indexAttribute.updateRange = { offset: index * stride, count: stride };
@@ -127,6 +139,11 @@ export class TerrainManager {
 
 		this.positionAttribute.updateRange = { offset: index * stride * 3, count: stride * 3 };
 		this.positionAttribute.needsUpdate = true;
+
+		this.normalAttribute.updateRange = { offset: index * stride * 3, count: stride * 3 };
+		this.normalAttribute.needsUpdate = true;
+
+		// this.geometry.computeVertexNormals();
 
 		this.geometry.clearGroups();
 
