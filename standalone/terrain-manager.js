@@ -36,18 +36,22 @@ export class TerrainManager {
 		this.groupBuffer = this.moduleInstance.HEAP32.subarray(head + 2, head + 3)[0];
 
 		this.positions = this.moduleInstance.HEAPF32.subarray(this.positionBuffer / 4, this.positionBuffer / 4 + positionCount * 3);
-		this.faces = this.moduleInstance.HEAP32.subarray(this.faceBuffer / 4, this.faceBuffer / 4 + faceCount);
+		this.faces = this.moduleInstance.HEAPU32.subarray(this.faceBuffer / 4, this.faceBuffer / 4 + faceCount);
 		this.groups = this.moduleInstance.HEAP32.subarray(this.groupBuffer / 4, this.groupBuffer / 4 + this.chunkCount * this.chunkCount * 2);
 
 		this.geometry = new THREE.BufferGeometry();
-		this.indexAttribute = new THREE.Uint32BufferAttribute(this.faces, 1);
+
+		this.indexAttribute = new THREE.Uint32BufferAttribute();
+		this.indexAttribute.array = this.faces;
+		this.indexAttribute.itemSize = 1;
+		this.indexAttribute.count = this.faces.length;
 		this.indexAttribute.setUsage( THREE.DynamicDrawUsage );
 
-		this.positionAttribute = new THREE.Float32BufferAttribute(this.positions, 3);
+		this.positionAttribute = new THREE.Float32BufferAttribute();
+		this.positionAttribute.array = this.positions;
+		this.positionAttribute.itemSize = 3;
+		this.positionAttribute.count = this.positions.length / 3;
 		this.positionAttribute.setUsage( THREE.DynamicDrawUsage );
-
-		this.indexAttribute.onUploadCallback = () => { console.log(">>> index: uploaded")};
-		this.positionAttribute.onUploadCallback = () => { console.log(">>> position: uploaded")};
 
 		this.geometry.setIndex(this.indexAttribute);
 		this.geometry.setAttribute('position', this.positionAttribute);
@@ -114,16 +118,15 @@ export class TerrainManager {
 		let stride = 32 * 32 * 20;
 
 		this.moduleInstance._updateChunk(
-			this.positionBuffer, this.faceBuffer, this.groupBuffer, chunkOrigin.x, chunkOrigin.y, chunkOrigin.z,
+			this.positions.byteOffset, this.geometry.index.array.byteOffset, this.groups.byteOffset, chunkOrigin.x, chunkOrigin.y, chunkOrigin.z,
 			this.chunkSize, 32, index, index * stride, index * stride
 		);
 
 		this.indexAttribute.updateRange = { offset: index * stride, count: stride };
 		this.indexAttribute.needsUpdate = true;
 
-		this.positionAttribute.updateRange = { offset: index * stride * 3, count: stride * 3};
+		this.positionAttribute.updateRange = { offset: index * stride * 3, count: stride * 3 };
 		this.positionAttribute.needsUpdate = true;
-
 
 		this.geometry.clearGroups();
 
