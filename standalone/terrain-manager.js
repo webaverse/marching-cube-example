@@ -15,6 +15,13 @@ export class TerrainManager {
 		this.currentChunkIds = [...this.targetChunkIds];
 
 		this.segment = 32;
+
+		/*
+		 * if following parameters are too small, memory areas of chunks can be overlaid
+		 * if too big, memory will be over allocated;
+		 */
+		this.vertexStrideParam = 20;
+		this.faceStrideParam = 20;
 	}
 
 	init() {
@@ -24,12 +31,14 @@ export class TerrainManager {
 
 	_generateBuffers() {
 
-		const outputBuffer = this.moduleInstance._generateTerrain(200, this.chunkCount, this.segment);
+		const outputBuffer = this.moduleInstance._generateTerrain(
+			this.chunkSize, this.chunkCount, this.segment, this.vertexStrideParam, this.faceStrideParam
+		);
 
 		const head = outputBuffer / 4;
 
-		const positionCount = this.chunkCount * this.chunkCount * this.segment * this.segment * 20;
-		const faceCount = this.chunkCount * this.chunkCount * this.segment * this.segment * 20;
+		const positionCount = this.chunkCount * this.chunkCount * this.segment * this.segment * this.vertexStrideParam;
+		const faceCount = this.chunkCount * this.chunkCount * this.segment * this.segment * this.faceStrideParam;
 
 		this.positionBuffer = this.moduleInstance.HEAP32.subarray(head + 0, head + 1)[0];
 		this.normalBuffer = this.moduleInstance.HEAP32.subarray(head + 1, head + 2)[0];
@@ -126,24 +135,23 @@ export class TerrainManager {
 
 		console.log(">>> update chunk index: ", index);
 
-		let stride = this.segment * this.segment * 20;
+		const vertexStride = this.segment * this.segment * this.vertexStrideParam;
+		const faceStride = this.segment * this.segment * this.faceStrideParam;
 
 		this.moduleInstance._updateChunk(
 			this.positionBuffer, this.normalBuffer, this.faceBuffer, this.groupBuffer,
 			chunkOrigin.x, chunkOrigin.y, chunkOrigin.z,
-			this.chunkSize, this.segment, index, index * stride, index * stride
+			this.chunkSize, this.segment, index, index * vertexStride, index * faceStride
 		);
 
-		this.indexAttribute.updateRange = { offset: index * stride, count: stride };
+		this.indexAttribute.updateRange = { offset: index * faceStride, count: faceStride };
 		this.indexAttribute.needsUpdate = true;
 
-		this.positionAttribute.updateRange = { offset: index * stride * 3, count: stride * 3 };
+		this.positionAttribute.updateRange = { offset: index * vertexStride * 3, count: vertexStride * 3 };
 		this.positionAttribute.needsUpdate = true;
 
-		this.normalAttribute.updateRange = { offset: index * stride * 3, count: stride * 3 };
+		this.normalAttribute.updateRange = { offset: index * vertexStride * 3, count: vertexStride * 3 };
 		this.normalAttribute.needsUpdate = true;
-
-		// this.geometry.computeVertexNormals();
 
 		this.geometry.clearGroups();
 
