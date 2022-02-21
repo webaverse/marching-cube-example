@@ -20,8 +20,8 @@ export class TerrainManager {
 		 * if following parameters are too small, memory areas of chunks can be overlaid
 		 * if too big, memory will be over allocated;
 		 */
-		this.vertexStrideParam = 20;
-		this.faceStrideParam = 20;
+		this.vertexBufferSizeParam = 20;
+		this.indexBufferSizeParam = 20;
 	}
 
 	init() {
@@ -32,13 +32,13 @@ export class TerrainManager {
 	_generateBuffers() {
 
 		const outputBuffer = this.moduleInstance._generateTerrain(
-			this.chunkSize, this.chunkCount, this.segment, this.vertexStrideParam, this.faceStrideParam
+			this.chunkSize, this.chunkCount, this.segment, this.vertexBufferSizeParam, this.indexBufferSizeParam
 		);
 
 		const head = outputBuffer / 4;
 
-		const positionCount = this.chunkCount * this.chunkCount * this.segment * this.segment * this.vertexStrideParam;
-		const faceCount = this.chunkCount * this.chunkCount * this.segment * this.segment * this.faceStrideParam;
+		const positionCount = this.chunkCount * this.chunkCount * this.segment * this.segment * this.vertexBufferSizeParam;
+		const faceCount = this.chunkCount * this.chunkCount * this.segment * this.segment * this.indexBufferSizeParam;
 
 		this.positionBuffer = this.moduleInstance.HEAP32.subarray(head + 0, head + 1)[0];
 		this.normalBuffer = this.moduleInstance.HEAP32.subarray(head + 1, head + 2)[0];
@@ -116,9 +116,6 @@ export class TerrainManager {
 
 	updateChunk() {
 
-		// console.log(">>> current ids: ", this.currentChunkIds);
-		// console.log(">>> target ids: ", this.targetChunkIds);
-
 		let chunkIdToAdd = this.targetChunkIds.filter(
 			id => !this.currentChunks.map(v => v.chunkId).includes(id)
 		).at(0);
@@ -157,29 +154,11 @@ export class TerrainManager {
 			this.currentChunks.push({ slots: slots, chunkId: chunkIdToAdd });
 
 			this._updateChunkGeometry(slots);
-
-			// let chunkIdToRemove = this.currentChunkIds.filter(id => !this.targetChunkIds.includes(id)).at(0);
-			// let index = this.currentChunkIds.indexOf(chunkIdToRemove);
-			// this.currentChunkIds[index] = chunkIdToAdd;
-
-			// console.log(">>> to allocate: ", chunkIdToAdd);
-			// console.log(">>> to deallocate: ", chunkIdToRemove);
-			// console.log(">>> index: ", index);
-
-			// this._updateChunkGeometry(index, new THREE.Vector3(gridId[0] * this.chunkSize, 0, gridId[1] * this.chunkSize));
 		}
 
 	}
 
 	_updateChunkGeometry(slots) {
-		// const vertexStride = this.segment * this.segment * this.vertexStrideParam;
-		// const faceStride = this.segment * this.segment * this.faceStrideParam;
-
-		// this.moduleInstance._updateChunk(
-		// 	this.positionBuffer, this.normalBuffer, this.indexBuffer, this.chunkIndexRangeBuffer,
-		// 	chunkOrigin.x, chunkOrigin.y, chunkOrigin.z,
-		// 	this.chunkSize, this.segment, index, index * vertexStride, index * faceStride
-		// );
 
 		this.indexAttribute.updateRange = {
 			offset: this.indexRanges[slots[1] * 2],
