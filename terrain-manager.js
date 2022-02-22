@@ -73,6 +73,8 @@ export class TerrainManager {
 		this.mesh = new THREE.Mesh(
 			this.geometry, [new THREE.MeshLambertMaterial({ color: 0xff0000, wireframe: true })]
 		);
+
+		this.mesh.frustumCulled = false;
 	}
 
 	_calculateTargetChunks() {
