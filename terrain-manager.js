@@ -24,15 +24,10 @@ export class TerrainManager {
 		this.vertexBufferSizeParam = 20;
 		this.indexBufferSizeParam = 20;
 
-		this.init();
+		this._initializeTerrain();
 	}
 
-	init() {
-
-		this._generateBuffers();
-	}
-
-	_generateBuffers() {
+	_initializeTerrain() {
 
 		this.bufferFactory = this.geometryUtils.generateTerrain(
 			this.chunkSize, this.chunkCount, this.segment,
@@ -74,6 +69,8 @@ export class TerrainManager {
 		this.mesh = new THREE.Mesh(
 			this.geometry, [terrainMaterial]
 		);
+
+		this.mesh.frustumCulled = false;
 	}
 
 	_calculateTargetChunks() {
@@ -92,6 +89,10 @@ export class TerrainManager {
 		return targetChunks;
 	}
 
+	terrain() {
+		return this.mesh;
+	}
+
 	updateCenter(pos) {
 
 		this.center = pos;
@@ -107,11 +108,9 @@ export class TerrainManager {
 			id => !this.currentChunks.map(v => v.chunkId).includes(id)
 		).at(0);
 
-		console.log(">>> chunk id to add: ", chunkIdToAdd);
-
-		let chunksToRemove = this.currentChunks.filter(chunk => !this.targetChunkIds.includes(chunk.chunkId));
-
-		console.log(">>> chunk id to remove: ", chunksToRemove);
+		let chunksToRemove = this.currentChunks.filter(
+			chunk => !this.targetChunkIds.includes(chunk.chunkId)
+		);
 
 		chunksToRemove.forEach(chunk => {
 			this.geometryUtils.deallocateChunk(
@@ -123,12 +122,14 @@ export class TerrainManager {
 			);
 		});
 
-		this.currentChunks = this.currentChunks.filter(chunk => this.targetChunkIds.includes(chunk.chunkId));
+		this.currentChunks = this.currentChunks.filter(
+			chunk => this.targetChunkIds.includes(chunk.chunkId)
+		);
 
 		if (!!chunkIdToAdd) {
 			let gridId = chunkIdToAdd.split(':');
 
-			let slots = this.geometryUtils.allocateChunk(
+			let slots = this.geometryUtils.generateChunk(
 				buf.positionBuffer, buf.normalBuffer, buf.indexBuffer,
 				buf.chunkVertexRangeBuffer,
 				buf.vertexFreeRangeBuffer,
@@ -157,13 +158,13 @@ export class TerrainManager {
 
 		this.positionAttribute.updateRange = {
 			offset: buf.vertexRanges[slots[0] * 2] * 3,
-			count: buf.vertexRanges[slots[0] * 2 + 1] * 3,
+			count: buf.vertexRanges[slots[0] * 2 + 1] * 3
 		};
 		this.positionAttribute.needsUpdate = true;
 
 		this.normalAttribute.updateRange = {
 			offset: buf.vertexRanges[slots[0] * 2] * 3,
-			count: buf.vertexRanges[slots[0] * 2 + 1] * 3,
+			count: buf.vertexRanges[slots[0] * 2 + 1] * 3
 		};
 		this.normalAttribute.needsUpdate = true;
 
