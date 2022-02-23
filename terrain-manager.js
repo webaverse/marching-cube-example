@@ -154,13 +154,13 @@ export class TerrainManager {
 
 		this.positionAttribute.updateRange = {
 			offset: buf.vertexRanges[slots[0] * 2] * 3,
-			count: buf.vertexRanges[slots[0] * 2 + 1] * 3,
+			count: buf.vertexRanges[slots[0] * 2 + 1] * 3
 		};
 		this.positionAttribute.needsUpdate = true;
 
 		this.normalAttribute.updateRange = {
 			offset: buf.vertexRanges[slots[0] * 2] * 3,
-			count: buf.vertexRanges[slots[0] * 2 + 1] * 3,
+			count: buf.vertexRanges[slots[0] * 2 + 1] * 3
 		};
 		this.normalAttribute.needsUpdate = true;
 
