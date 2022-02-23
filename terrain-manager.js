@@ -23,15 +23,10 @@ export class TerrainManager {
 		this.vertexBufferSizeParam = 20;
 		this.indexBufferSizeParam = 20;
 
-		this.init();
+		this._initializeTerrain();
 	}
 
-	init() {
-
-		this._generateBuffers();
-	}
-
-	_generateBuffers() {
+	_initializeTerrain() {
 
 		this.bufferFactory = this.geometryUtils.generateTerrain(
 			this.chunkSize, this.chunkCount, this.segment,
@@ -93,6 +88,10 @@ export class TerrainManager {
 		return targetChunks;
 	}
 
+	terrain() {
+		return this.mesh;
+	}
+
 	updateCenter(pos) {
 
 		this.center = pos;
@@ -125,7 +124,7 @@ export class TerrainManager {
 		if (!!chunkIdToAdd) {
 			let gridId = chunkIdToAdd.split(':');
 
-			let slots = this.geometryUtils.allocateChunk(
+			let slots = this.geometryUtils.generateChunk(
 				buf.positionBuffer, buf.normalBuffer, buf.indexBuffer,
 				buf.chunkVertexRangeBuffer,
 				buf.vertexFreeRangeBuffer,
