@@ -107,7 +107,9 @@ export class TerrainManager {
 			id => !this.currentChunks.map(v => v.chunkId).includes(id)
 		).at(0);
 
-		let chunksToRemove = this.currentChunks.filter(chunk => !this.targetChunkIds.includes(chunk.chunkId));
+		let chunksToRemove = this.currentChunks.filter(
+			chunk => !this.targetChunkIds.includes(chunk.chunkId)
+		);
 
 		chunksToRemove.forEach(chunk => {
 			this.geometryUtils.deallocateChunk(
@@ -119,7 +121,9 @@ export class TerrainManager {
 			);
 		});
 
-		this.currentChunks = this.currentChunks.filter(chunk => this.targetChunkIds.includes(chunk.chunkId));
+		this.currentChunks = this.currentChunks.filter(
+			chunk => this.targetChunkIds.includes(chunk.chunkId)
+		);
 
 		if (!!chunkIdToAdd) {
 			let gridId = chunkIdToAdd.split(':');
