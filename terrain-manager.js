@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { terrainMaterial } from './material.js';
 
 export class TerrainManager {
 
@@ -39,19 +40,19 @@ export class TerrainManager {
 		this.indexAttribute.array = this.bufferFactory.indices;
 		this.indexAttribute.itemSize = 1;
 		this.indexAttribute.count = this.bufferFactory.indices.length;
-		this.indexAttribute.setUsage( THREE.DynamicDrawUsage );
+		this.indexAttribute.setUsage(THREE.DynamicDrawUsage);
 
 		this.positionAttribute = new THREE.Float32BufferAttribute();
 		this.positionAttribute.array = this.bufferFactory.positions;
 		this.positionAttribute.itemSize = 3;
 		this.positionAttribute.count = this.bufferFactory.positions.length / 3;
-		this.positionAttribute.setUsage( THREE.DynamicDrawUsage );
+		this.positionAttribute.setUsage(THREE.DynamicDrawUsage);
 
 		this.normalAttribute = new THREE.Float32BufferAttribute();
 		this.normalAttribute.array = this.bufferFactory.normals;
 		this.normalAttribute.itemSize = 3;
 		this.normalAttribute.count = this.bufferFactory.normals.length / 3;
-		this.normalAttribute.setUsage( THREE.DynamicDrawUsage );
+		this.normalAttribute.setUsage(THREE.DynamicDrawUsage);
 
 		this.geometry.setIndex(this.indexAttribute);
 		this.geometry.setAttribute('position', this.positionAttribute);
@@ -66,7 +67,7 @@ export class TerrainManager {
 		}
 
 		this.mesh = new THREE.Mesh(
-			this.geometry, [new THREE.MeshLambertMaterial({ color: 0xff0000, wireframe: false })]
+			this.geometry, [terrainMaterial]
 		);
 
 		this.mesh.frustumCulled = false;
