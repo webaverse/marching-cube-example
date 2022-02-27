@@ -1,24 +1,17 @@
 import * as THREE from 'three';
 import { MeshPhongMaterial, TextureLoader, Vector4 } from 'three';
 
-export const terrainMaterial = new MeshPhongMaterial({ color: 0xffffff , wireframe: false });
-export const terrainMaterials = [
-    new MeshPhongMaterial({ color: 0xfffffb, wireframe: true }),
-    new MeshPhongMaterial({ color: 0xfffffc, wireframe: true }),
-    new MeshPhongMaterial({ color: 0xfffffd, wireframe: true }),
-    new MeshPhongMaterial({ color: 0xfffffe, wireframe: true }),
-    new MeshPhongMaterial({ color: 0xffffff, wireframe: true })];
+export const terrainMaterial = new MeshPhongMaterial({ color: 0xffffff, wireframe: false, fog: true });
 const textureLoader = new TextureLoader();
-// const grassTexture = textureLoader.load(`${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/grasslight-big.jpg`)
-// const rockTexture = textureLoader.load(`${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/rock_boulder_dry_diff_1k.png`)
-const grassTexture = textureLoader.load('http://127.0.0.1:5501/textures/grasslight-big.jpg')
-const rockTexture = textureLoader.load('http://127.0.0.1:5501/textures/rock_boulder_dry_diff_1k.png')
-// const grassTexture = textureLoader.load('./textures/grasslight-big.jpg')
-// const rockTexture = textureLoader.load('./textures/rock_boulder_dry_diff_1k.png')
+const grassTexture = textureLoader.load('http://127.0.0.1:5502/textures/grasslight-big.jpg')
+const rockTexture = textureLoader.load('http://127.0.0.1:5502/textures/rock_boulder_dry_diff_1k.png')
+const waterNituTexture = textureLoader.load('http://127.0.0.1:5502/textures/terrain2.jpg')
 grassTexture.wrapS = THREE.RepeatWrapping;
 grassTexture.wrapT = THREE.RepeatWrapping;
 rockTexture.wrapS = THREE.RepeatWrapping;
 rockTexture.wrapT = THREE.RepeatWrapping;
+waterNituTexture.wrapS = THREE.RepeatWrapping;
+waterNituTexture.wrapT = THREE.RepeatWrapping;
 terrainMaterial.onBeforeCompile = (shader, renderer) => {
     terrainMaterial.shader = shader;
     shader.vertexShader =
@@ -114,6 +107,7 @@ uniform float opacity;
     varying vec3  vtriNormal;
     uniform sampler2D grassTexture;
     uniform sampler2D rockTexture;
+    uniform sampler2D waterNituTexture;
     // uniform sampler2D grassTexture;
     // uniform sampler2D grassTexture; 
 //    vec4 triplaneblend(vec3 normal,sampler2D texture,vec3 coord){
@@ -145,18 +139,26 @@ void main() {
 
         
         vec4 xaxis,yaxis,zaxis; 
-        xaxis = texture2D(grassTexture, vtriCoord.yz*0.1);
-        yaxis = texture2D(grassTexture, vtriCoord.xz*0.1);
-        zaxis = texture2D(grassTexture, vtriCoord.xy*0.1);
+        xaxis = texture2D(grassTexture, vtriCoord.yz*0.01);
+        yaxis = texture2D(grassTexture, vtriCoord.xz*0.01);
+        zaxis = texture2D(grassTexture, vtriCoord.xy*0.01);
         vec4 grassTex = xaxis * blending.x + yaxis * blending.y + zaxis * blending.z; 
     
-        xaxis = texture2D(rockTexture, vtriCoord.yz*0.1);
-        yaxis = texture2D(rockTexture, vtriCoord.xz*0.1);
-        zaxis = texture2D(rockTexture, vtriCoord.xy*0.1);
+        xaxis = texture2D(rockTexture, vtriCoord.yz*0.01);
+        yaxis = texture2D(rockTexture, vtriCoord.xz*0.01);
+        zaxis = texture2D(rockTexture, vtriCoord.xy*0.01);
         vec4 rockTex = xaxis * blending.x + yaxis * blending.y + zaxis * blending.z; 
         float amount = smoothstep (0.6,0.8,vtriNormal.y);
+ 
+        xaxis = texture2D(waterNituTexture, vtriCoord.yz*0.01);
+        yaxis = texture2D(waterNituTexture, vtriCoord.xz*0.01);
+        zaxis = texture2D(waterNituTexture, vtriCoord.xy*0.01);
+        vec4 waterNituTex = xaxis * blending.x + yaxis * blending.y + zaxis * blending.z; 
 
         vec4 tex =amount* grassTex+(1.0-amount)*rockTex;
+
+        float amount1 =  smoothstep(45.0,55.0,vtriCoord.y);
+        tex =amount1* tex+(1.0-amount1)*waterNituTex;
          
         // blend the results of the 3 planar projections.
         diffuseColor *= tex;
@@ -188,6 +190,7 @@ void main() {
     shader.defines = shader.defines || {};
     shader.uniforms.grassTexture = { value: grassTexture };
     shader.uniforms.rockTexture = { value: rockTexture };
+    shader.uniforms.waterNituTexture = { value: waterNituTexture };
     shader.uniforms.bbox = { value: new Vector4() };
     // if (terrainMaterial.bbox)
     // { 
@@ -196,19 +199,3 @@ void main() {
     terrainMaterial.uniforms = shader.uniforms;
     shader.defines['USE_TRIPLANETEXTURE'] = '';
 }
-
-terrainMaterial.onBeforeRender = (renderer) => {
-    if (!terrainMaterial.shader)
-        return;
-
-    // const shader = terrainMaterial.shader;
-    // if (shader.uniforms && terrainMaterial.bbox && !shader.uniforms.bbox.value.equals(terrainMaterial.bbox)) {
-    //     shader.uniforms.bbox.value.copy(terrainMaterial.bbox);
-    // }
-}
-//     new THREE.ShaderMaterial({
-//     vertexShader: vs,
-//     fragmentShader: fs,
-//     defines: {},
-//     uniforms: {}
-// });

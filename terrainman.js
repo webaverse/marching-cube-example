@@ -42,6 +42,8 @@ const DictDifference = (dictA, dictB) => {
 const _MIN_CELL_SIZE = 500;
 const _FIXED_GRID_SIZE = 10;
 const _MIN_CELL_RESOLUTION = 64;
+const MAX_WIDTH = 16384;
+const MAX_CELL_WIDTH = 8192;
 
 export class TerrainManager {
     constructor(geoUtils) {
@@ -100,9 +102,17 @@ export class TerrainManager {
     }
 
     updateVisibleChunk(position) {
+        // 无限地形
+        const cellX = Math.floor(position.x / MAX_CELL_WIDTH + 0.5);
+        const cellZ = Math.floor(position.z / MAX_CELL_WIDTH + 0.5);
+
+        const centerX = cellX * MAX_CELL_WIDTH;
+        const centerZ = cellZ * MAX_CELL_WIDTH; 
+
+        console.log(cellX, cellZ);
         const q = new QuadTree({
-            min: new THREE.Vector2(-16384, -16384),
-            max: new THREE.Vector2(16384, 16384),
+            min: new THREE.Vector2(centerX - MAX_CELL_WIDTH, centerZ - MAX_CELL_WIDTH),
+            max: new THREE.Vector2(centerX + MAX_CELL_WIDTH, centerZ + MAX_CELL_WIDTH),
         });
 
         q.insert(position);
