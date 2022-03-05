@@ -15,7 +15,7 @@ export class TerrainManager {
 		this.targetChunkIds = this._calculateTargetChunks();
 		this.currentChunks = this.targetChunkIds.map((v, i) => { return { slots: [i, i], chunkId: v } });
 
-		this.segment = 16;
+		this.segment = 32;
 
 		/*
 		 * if following parameters are too small, memory areas of chunks can be overlaid
@@ -24,10 +24,15 @@ export class TerrainManager {
 		this.vertexBufferSizeParam = 20;
 		this.indexBufferSizeParam = 20;
 
-		this._initializeTerrain();
+		this.init();
 	}
 
-	_initializeTerrain() {
+	init() {
+
+		this._generateBuffers();
+	}
+
+	_generateBuffers() {
 
 		this.bufferFactory = this.geometryUtils.generateTerrain(
 			this.chunkSize, this.chunkCount, this.segment,
@@ -40,19 +45,19 @@ export class TerrainManager {
 		this.indexAttribute.array = this.bufferFactory.indices;
 		this.indexAttribute.itemSize = 1;
 		this.indexAttribute.count = this.bufferFactory.indices.length;
-		this.indexAttribute.setUsage(THREE.DynamicDrawUsage);
+		this.indexAttribute.setUsage( THREE.DynamicDrawUsage );
 
 		this.positionAttribute = new THREE.Float32BufferAttribute();
 		this.positionAttribute.array = this.bufferFactory.positions;
 		this.positionAttribute.itemSize = 3;
 		this.positionAttribute.count = this.bufferFactory.positions.length / 3;
-		this.positionAttribute.setUsage(THREE.DynamicDrawUsage);
+		this.positionAttribute.setUsage( THREE.DynamicDrawUsage );
 
 		this.normalAttribute = new THREE.Float32BufferAttribute();
 		this.normalAttribute.array = this.bufferFactory.normals;
 		this.normalAttribute.itemSize = 3;
 		this.normalAttribute.count = this.bufferFactory.normals.length / 3;
-		this.normalAttribute.setUsage(THREE.DynamicDrawUsage);
+		this.normalAttribute.setUsage( THREE.DynamicDrawUsage );
 
 		this.geometry.setIndex(this.indexAttribute);
 		this.geometry.setAttribute('position', this.positionAttribute);
@@ -60,14 +65,14 @@ export class TerrainManager {
 
 		this.geometry.clearGroups();
 
-		for (let i = 0; i < this.chunkCount * this.chunkCount; i++) {
+		for (let i = 0; i < this.chunkCount ** 3; i++) {
 			this.geometry.addGroup(
 				this.bufferFactory.indexRanges[2 * i], this.bufferFactory.indexRanges[2 * i + 1], 0
 			);
 		}
 
 		this.mesh = new THREE.Mesh(
-			this.geometry, [terrainMaterial]
+			this.geometry, [new THREE.MeshLambertMaterial({ color: 0xff0000, wireframe: false })]
 		);
 
 		this.mesh.frustumCulled = false;
@@ -76,21 +81,20 @@ export class TerrainManager {
 	_calculateTargetChunks() {
 
 		let centerChunkGridX = Math.floor(this.center.x / this.chunkSize);
+		let centerChunkGridY = Math.floor(this.center.y / this.chunkSize);
 		let centerChunkGridZ = Math.floor(this.center.z / this.chunkSize);
 
 		let targetChunks = [];
 
 		for (let i = centerChunkGridX - this.chunkRange; i < centerChunkGridX + this.chunkRange + 1; i++) {
-			for (let j = centerChunkGridZ - this.chunkRange; j < centerChunkGridZ + this.chunkRange + 1; j++) {
-				targetChunks.push(i + ':' + j);
+			for (let j = centerChunkGridY - this.chunkRange; j < centerChunkGridY + this.chunkRange + 1; j++) {
+				for (let k = centerChunkGridZ - this.chunkRange; k < centerChunkGridZ + this.chunkRange + 1; k++) {
+					targetChunks.push(i + ':' + j + ':' + k);
+				}
 			}
 		}
 
 		return targetChunks;
-	}
-
-	terrain() {
-		return this.mesh;
 	}
 
 	updateCenter(pos) {
@@ -108,13 +112,19 @@ export class TerrainManager {
 			id => !this.currentChunks.map(v => v.chunkId).includes(id)
 		).at(0);
 
-		let chunksToRemove = this.currentChunks.filter(
-			chunk => !this.targetChunkIds.includes(chunk.chunkId)
-		);
+		if (chunkIdToAdd === undefined) {
+			return;
+		}
+
+		// console.log(">>> vertex ranges before deallocate: ", buf.vertexRanges);
+		// console.log(">>> free vertex ranges before deallocate: ", buf.freeVertexRanges);
+
+		let chunksToRemove = this.currentChunks.filter(chunk => !this.targetChunkIds.includes(chunk.chunkId));
 
 		chunksToRemove.forEach(chunk => {
+			console.log(">>> removing chunk: ", chunk);
 			this.geometryUtils.deallocateChunk(
-				chunk.slots[0], chunk.slots[1], this.chunkCount ** 2,
+				chunk.slots[0], chunk.slots[1], this.chunkCount ** 3,
 				buf.chunkVertexRangeBuffer,
 				buf.vertexFreeRangeBuffer,
 				buf.chunkIndexRangeBuffer,
@@ -122,21 +132,22 @@ export class TerrainManager {
 			);
 		});
 
-		this.currentChunks = this.currentChunks.filter(
-			chunk => this.targetChunkIds.includes(chunk.chunkId)
-		);
+		// console.log(">>> vertex ranges after deallocate: ", buf.vertexRanges);
+		// console.log(">>> free vertex ranges after deallocate: ", buf.freeVertexRanges);
+
+		this.currentChunks = this.currentChunks.filter(chunk => this.targetChunkIds.includes(chunk.chunkId));
 
 		if (!!chunkIdToAdd) {
 			let gridId = chunkIdToAdd.split(':');
 
-			let slots = this.geometryUtils.generateChunk(
+			let slots = this.geometryUtils.allocateChunk(
 				buf.positionBuffer, buf.normalBuffer, buf.indexBuffer,
 				buf.chunkVertexRangeBuffer,
 				buf.vertexFreeRangeBuffer,
 				buf.chunkIndexRangeBuffer,
 				buf.indexFreeRangeBuffer,
-				gridId[0] * this.chunkSize, 0, gridId[1] * this.chunkSize,
-				this.chunkSize, this.segment, this.chunkCount ** 2
+				gridId[0] * this.chunkSize, gridId[1] * this.chunkSize, gridId[2] * this.chunkSize,
+				this.chunkSize, this.segment, this.chunkCount ** 3
 			);
 
 			this.currentChunks.push({ slots: slots, chunkId: chunkIdToAdd });
@@ -144,6 +155,9 @@ export class TerrainManager {
 			this._updateChunkGeometry(slots);
 		}
 
+		// console.log(">>> vertex ranges after allocate: ", buf.vertexRanges);
+		// console.log(">>> free vertex ranges after allocate: ", buf.freeVertexRanges);
+		// console.log("=====================================");
 	}
 
 	_updateChunkGeometry(slots) {
@@ -158,19 +172,19 @@ export class TerrainManager {
 
 		this.positionAttribute.updateRange = {
 			offset: buf.vertexRanges[slots[0] * 2] * 3,
-			count: buf.vertexRanges[slots[0] * 2 + 1] * 3
+			count: buf.vertexRanges[slots[0] * 2 + 1] * 3,
 		};
 		this.positionAttribute.needsUpdate = true;
 
 		this.normalAttribute.updateRange = {
 			offset: buf.vertexRanges[slots[0] * 2] * 3,
-			count: buf.vertexRanges[slots[0] * 2 + 1] * 3
+			count: buf.vertexRanges[slots[0] * 2 + 1] * 3,
 		};
 		this.normalAttribute.needsUpdate = true;
 
 		this.geometry.clearGroups();
 
-		for (let i = 0; i < this.chunkCount * this.chunkCount; i++) {
+		for (let i = 0; i < this.chunkCount ** 3; i++) {
 			this.geometry.addGroup(
 				buf.indexRanges[i * 2],
 				buf.indexRanges[i * 2 + 1],
