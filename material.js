@@ -3,9 +3,12 @@ import { MeshPhongMaterial, TextureLoader, Vector4 } from 'three';
 
 export const terrainMaterial = new MeshPhongMaterial({ color: 0xffffff, wireframe: false, fog: true });
 const textureLoader = new TextureLoader();
-const grassTexture = textureLoader.load('http://127.0.0.1:5502/textures/grasslight-big.jpg')
-const rockTexture = textureLoader.load('http://127.0.0.1:5502/textures/rock_boulder_dry_diff_1k.png')
-const waterNituTexture = textureLoader.load('http://127.0.0.1:5502/textures/terrain2.jpg')
+// const grassTexture = textureLoader.load('http://127.0.0.1:5502/textures/grasslight-big.jpg')
+// const rockTexture = textureLoader.load('http://127.0.0.1:5502/textures/rock_boulder_dry_diff_1k.png')
+// const waterNituTexture = textureLoader.load('http://127.0.0.1:5502/textures/terrain2.jpg')
+const grassTexture = textureLoader.load(`${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/grasslight-big.jpg`);
+const rockTexture = textureLoader.load(`${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/rock_boulder_dry_diff_1k.png`)
+const waterNituTexture = textureLoader.load(`${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/terrain2.jpg`)
 grassTexture.wrapS = THREE.RepeatWrapping;
 grassTexture.wrapT = THREE.RepeatWrapping;
 rockTexture.wrapS = THREE.RepeatWrapping;
