@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { terrainMaterial } from './material.js';
+// import { terrainMaterial } from './material.js';
 
 export class TerrainManager {
 
@@ -23,6 +23,9 @@ export class TerrainManager {
 		 */
 		this.vertexBufferSizeParam = 20;
 		this.indexBufferSizeParam = 20;
+
+		this.onAddChunk = () => {};
+		this.onRemoveChunks = () => {};
 
 		this.init();
 	}
@@ -85,6 +88,11 @@ export class TerrainManager {
 		this.mesh.frustumCulled = false;
 	}
 
+	getInitialChunkMeshes() {
+
+		return this.currentChunks.map(chunk => [chunk.chunkId, this.getChunkMesh(chunk.chunkId)]);
+	}
+
 	_calculateTargetChunks() {
 
 		let centerChunkGridX = Math.floor(this.center.x / this.chunkSize);
@@ -129,7 +137,6 @@ export class TerrainManager {
 		let chunksToRemove = this.currentChunks.filter(chunk => !this.targetChunkIds.includes(chunk.chunkId));
 
 		chunksToRemove.forEach(chunk => {
-			console.log(">>> removing chunk: ", chunk);
 			this.geometryUtils.deallocateChunk(
 				chunk.slots[0], chunk.slots[1], this.chunkCount ** 3,
 				buf.chunkVertexRangeBuffer,
@@ -138,6 +145,10 @@ export class TerrainManager {
 				buf.indexFreeRangeBuffer
 			);
 		});
+
+		if (chunksToRemove.length > 0) {
+			this.onRemoveChunks(chunksToRemove.map(chunk => chunk.chunkId));
+		}
 
 		// console.log(">>> vertex ranges after deallocate: ", buf.vertexRanges);
 		// console.log(">>> free vertex ranges after deallocate: ", buf.freeVertexRanges);
@@ -160,6 +171,8 @@ export class TerrainManager {
 			this.currentChunks.push({ slots: slots, chunkId: chunkIdToAdd });
 
 			this._updateChunkGeometry(slots);
+
+			this.onAddChunk(chunkIdToAdd);
 		}
 
 		// console.log(">>> vertex ranges after allocate: ", buf.vertexRanges);
@@ -204,6 +217,40 @@ export class TerrainManager {
 				0
 			);
 		}
+	}
+
+	getChunkMesh(chunkId) {
+
+		const buf = this.bufferFactory;
+
+		let slots = this.currentChunks.filter(chunk => chunk.chunkId == chunkId)[0].slots;
+
+		if (buf.vertexRanges[2 * slots[0] + 1] === 0) {
+			return null;
+		}
+
+		let geometry = new THREE.BufferGeometry();
+		let positions = buf.positions.subarray(
+			buf.vertexRanges[2 * slots[0]] * 3,
+			buf.vertexRanges[2 * slots[0]] * 3 + buf.vertexRanges[2 * slots[0] + 1] * 3
+		);
+
+		let indices = buf.indices.slice(
+			buf.indexRanges[2 * slots[1]],
+			buf.indexRanges[2 * slots[1]] + buf.indexRanges[2 * slots[1] + 1]
+		);
+
+		for (let i = 0; i < indices.length; i++) {
+			indices[i] -= buf.vertexRanges[2 * slots[0]];
+		}
+
+		geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+		geometry.setIndex(new THREE.Uint32BufferAttribute(indices, 1));
+
+		const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: false }));
+
+		return mesh;
+
 	}
 
 }

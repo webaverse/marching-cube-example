@@ -12,19 +12,50 @@ export default () => {
 
     const rootScene = new THREE.Object3D();
 
-    const terrainManger = new TerrainManager(128, 2, geometryUtils);
-    const terrain = terrainManger.mesh;
+
+    const terrainManager = new TerrainManager(128, 2, geometryUtils);
+    const terrain = terrainManager.mesh;
+
+    let physicsIdChunkIdPairs = [];
+
+    let chunkIdMeshPairs = terrainManager.getInitialChunkMeshes();
+
+    chunkIdMeshPairs.forEach(pair => {
+
+        if (!!pair[1]) {
+            rootScene.add(pair[1]);
+            const physicsId = physics.addGeometry(pair[1]);
+            physicsIdChunkIdPairs.push({ physicsId: physicsId, chunkId: pair[0] });
+        }
+    });
+
+    terrainManager.onRemoveChunks = async (chunkIds) => {
+        physicsIdChunkIdPairs.filter(pair => chunkIds.includes(pair.chunkId))
+        .forEach(pair => {
+            physics.removeGeometry(pair.physicsId);
+            physicsIdChunkIdPairs.re
+        });
+
+        physicsIdChunkIdPairs = physicsIdChunkIdPairs.filter(pair => !chunkIds.includes(pair.chunkId));
+    };
+
+    terrainManager.onAddChunk = async (chunkId) => {
+        const mesh = terrainManager.getChunkMesh(chunkId);
+        const physicsId = physics.addGeometry(mesh);
+        physicsIdChunkIdPairs.push({ physicsId: physicsId, chunkId: chunkId });
+    };
 
     rootScene.add(terrain);
 
     const player = useLocalPlayer();
-    terrainManger.updateCenter(player.position);
-    terrainManger.updateChunk();
+    player.position.y = 100;
+    terrainManager.updateCenter(player.position);
+    terrainManager.updateChunk();
 
     useFrame(() => {
 
-        terrainManger.updateCenter(player.position);
-        terrainManger.updateChunk();
+        terrainManager.updateCenter(player.position);
+        terrainManager.updateChunk();
     });
 
     rootScene.add(new THREE.AxesHelper(1000))
