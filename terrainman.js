@@ -141,8 +141,7 @@ export class TerrainManager {
             newTerrainChunks[k] = child;
             if (dimensions.x < 100)
                 this.maxLevel[k] = child;
-        }
-        debugger
+        } 
         // console.log('new chunk length:' + newChunkLen);
 
         const cnewTerrainChunks = this.countDic(newTerrainChunks)
