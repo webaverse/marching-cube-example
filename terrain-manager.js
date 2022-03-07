@@ -59,9 +59,16 @@ export class TerrainManager {
 		this.normalAttribute.count = this.bufferFactory.normals.length / 3;
 		this.normalAttribute.setUsage( THREE.DynamicDrawUsage );
 
+		this.biomeAttribute = new THREE.Int32BufferAttribute();
+		this.biomeAttribute.array = this.bufferFactory.biomes;
+		this.biomeAttribute.itemSize = 1;
+		this.biomeAttribute.count = this.bufferFactory.biomes.length;
+		this.biomeAttribute.setUsage( THREE.DynamicDrawUsage );
+
 		this.geometry.setIndex(this.indexAttribute);
 		this.geometry.setAttribute('position', this.positionAttribute);
 		this.geometry.setAttribute('normal', this.normalAttribute);
+		this.geometry.setAttribute('biome', this.biomeAttribute);
 
 		this.geometry.clearGroups();
 
@@ -140,8 +147,8 @@ export class TerrainManager {
 		if (!!chunkIdToAdd) {
 			let gridId = chunkIdToAdd.split(':');
 
-			let slots = this.geometryUtils.allocateChunk(
-				buf.positionBuffer, buf.normalBuffer, buf.indexBuffer,
+			let slots = this.geometryUtils.generateChunk(
+				buf.positionBuffer, buf.normalBuffer, buf.biomeBuffer, buf.indexBuffer,
 				buf.chunkVertexRangeBuffer,
 				buf.vertexFreeRangeBuffer,
 				buf.chunkIndexRangeBuffer,
@@ -181,6 +188,12 @@ export class TerrainManager {
 			count: buf.vertexRanges[slots[0] * 2 + 1] * 3,
 		};
 		this.normalAttribute.needsUpdate = true;
+
+		this.biomeAttribute.updateRange = {
+			offset: buf.vertexRanges[slots[0] * 2],
+			count: buf.vertexRanges[slots[0] * 2 + 1],
+		};
+		this.biomeAttribute.needsUpdate = true;
 
 		this.geometry.clearGroups();
 

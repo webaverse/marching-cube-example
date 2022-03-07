@@ -12,7 +12,7 @@ export default () => {
 
     const rootScene = new THREE.Object3D();
 
-    const terrainManger = new TerrainManager(100, 2, geometryUtils);
+    const terrainManger = new TerrainManager(128, 2, geometryUtils);
     const terrain = terrainManger.mesh;
 
     rootScene.add(terrain);
