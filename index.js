@@ -23,7 +23,6 @@ export default () => {
     chunkIdMeshPairs.forEach(pair => {
 
         if (!!pair[1]) {
-            rootScene.add(pair[1]);
             const physicsId = physics.addGeometry(pair[1]);
             physicsIdChunkIdPairs.push({ physicsId: physicsId, chunkId: pair[0] });
         }
