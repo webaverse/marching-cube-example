@@ -3,6 +3,7 @@ import * as THREE from 'three'
 import * as OrbitControls from "three/examples/jsm/controls/OrbitControls";
 import { Water } from "three/examples/jsm/objects/Water";
 import { Sky } from "three/examples/jsm/objects/Sky";
+import Stats from "three/examples/jsm/libs/stats.module";
 import { TerrainManager } from './terrainman.js';
 const app = document.querySelector('#app');
 
@@ -15,7 +16,19 @@ const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerH
 const controls = new OrbitControls.OrbitControls(camera, renderer.domElement);
 const terrainManger = new TerrainManager();
 let water, sky, sunPosition = new THREE.Vector3();;
+
+var stats = new Stats();
+
+stats.setMode(0); // 0: fps, 1: ms
+
+// 放在左上角
+stats.domElement.style.position = 'absolute';
+stats.domElement.style.left = '0px';
+stats.domElement.style.top = '0px';
+
+document.body.appendChild(stats.domElement);
 const waterHeight = 40;
+
 function init() {
   camera.position.y = 100.1;
   camera.position.z = 0.01;
@@ -49,7 +62,7 @@ function init() {
 
         texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
 
-        
+
       }),
       sunDirection: new THREE.Vector3(),
       sunColor: 0xffffff,
@@ -76,10 +89,10 @@ function init() {
   skyUniforms['rayleigh'].value = 2;
   skyUniforms['mieCoefficient'].value = 0.005;
   skyUniforms['mieDirectionalG'].value = 0.8;
- 
-  updateSun(); 
+
+  updateSun();
 }
- 
+
 
 const parameters = {
   elevation: 30,
@@ -96,8 +109,12 @@ function updateSun() {
   sky.material.uniforms['sunPosition'].value.copy(sunPosition);
   water.material.uniforms['sunDirection'].value.copy(sunPosition).normalize();
 
-  scene.environment = pmremGenerator.fromScene(sky).texture;
+  // scene.environment = pmremGenerator.fromScene(sky).texture;
 }
+
+
+let fps = 0;
+let time = performance.now();
 
 function loop() {
   terrainManger.update(camera.position)
@@ -105,6 +122,15 @@ function loop() {
 
   water.material.uniforms['time'].value += 0.01;
   requestAnimationFrame(loop);
+  const now = performance.now();
+  fps++;
+  if (now - time > 1000) {
+    time = now;
+    console.log(fps);
+    fps = 0;
+  }
+
+  stats.update();
 }
 init();
 loop();

@@ -49,17 +49,17 @@ export class TerrainManager {
     constructor(geoUtils) {
         this.geoUtils = geoUtils;//
         this.init();
-        this.geometry = new THREE.BufferGeometry();
-        this.object = new THREE.Mesh(this.geometry, terrainMaterial);
+        // this.geometry = new THREE.BufferGeometry();
+        // this.object = new THREE.Mesh(this.geometry, terrainMaterial);
         this._group = new THREE.Group();
 
-        this.chunkLength = 64 * 64 * 16;
-        this.vertices = new Float32Array(this.chunkLength * 3 * 200);
-        this.normals = new Float32Array(this.chunkLength * 3 * 200);
-        this.indices = new Float32Array(this.chunkLength * 200);
-        this.geometry.setAttribute('position', new THREE.Float32BufferAttribute(this.vertices, 3))
-        // this.geometry.setAttribute('normal', new THREE.Float32BufferAttribute(this.normals, 3))
-        this.geometry.setIndex(new THREE.Uint32BufferAttribute(this.indices, 1))
+        // this.chunkLength = 64 * 64 * 16;
+        // this.vertices = new Float32Array(this.chunkLength * 3 * 200);
+        // this.normals = new Float32Array(this.chunkLength * 3 * 200);
+        // this.indices = new Float32Array(this.chunkLength * 200);
+        // this.geometry.setAttribute('position', new THREE.Float32BufferAttribute(this.vertices, 3))
+        // // this.geometry.setAttribute('normal', new THREE.Float32BufferAttribute(this.normals, 3))
+        // this.geometry.setIndex(new THREE.Uint32BufferAttribute(this.indices, 1))
     }
 
     init() {
@@ -165,7 +165,7 @@ export class TerrainManager {
                 chunk: this._CreateTerrainChunk(offset, difference[k].dimensions[0]),
             };
         }
-
+ 
         this._builder.sort();
 
         this._chunks = newTerrainChunks;

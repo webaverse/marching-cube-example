@@ -31,7 +31,7 @@ export class TerrainChunkRebuilder {
     }
 
     sort() {
-        this._queued.sort((a, b) => a.params.width - b.params.width);
+        this._queued.sort((a, b) => b.params.width - a.params.width);
     }
 
     _RecycleChunks(chunks) {
@@ -44,7 +44,6 @@ export class TerrainChunkRebuilder {
             c.chunk.Hide();
 
             this._pool[c.chunk.params.width].push(c.chunk);
-
         }
     }
 
