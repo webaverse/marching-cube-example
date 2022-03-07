@@ -28,7 +28,7 @@ export default () => {
         {
             textureWidth: 512,
             textureHeight: 512,
-            waterNormals: new THREE.TextureLoader().load('http://127.0.0.1:5502/textures/waternormals.jpg', function (texture) {
+            waterNormals: new THREE.TextureLoader().load(`${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/waternormals.jpg`, function (texture) {
                 texture.wrapS = texture.wrapT = THREE.RepeatWrapping; 
             }),
             sunDirection: new THREE.Vector3(),
