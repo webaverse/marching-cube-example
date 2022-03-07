@@ -107,7 +107,7 @@ export class TerrainManager {
         const cellZ = Math.floor(position.z / MAX_CELL_WIDTH + 0.5);
 
         const centerX = cellX * MAX_CELL_WIDTH;
-        const centerZ = cellZ * MAX_CELL_WIDTH; 
+        const centerZ = cellZ * MAX_CELL_WIDTH;
 
         console.log(cellX, cellZ);
         const q = new QuadTree({
@@ -124,6 +124,8 @@ export class TerrainManager {
         const dimensions = new THREE.Vector2();
 
         let newChunkLen = 0;
+
+        this.maxLevel = {}
         for (let c of children) {
             newChunkLen++
             c.bounds.getCenter(center);
@@ -137,7 +139,10 @@ export class TerrainManager {
 
             const k = genKey(child);
             newTerrainChunks[k] = child;
+            if (dimensions.x < 100)
+                this.maxLevel[k] = child;
         }
+        debugger
         // console.log('new chunk length:' + newChunkLen);
 
         const cnewTerrainChunks = this.countDic(newTerrainChunks)
@@ -165,7 +170,7 @@ export class TerrainManager {
                 chunk: this._CreateTerrainChunk(offset, difference[k].dimensions[0]),
             };
         }
- 
+
         this._builder.sort();
 
         this._chunks = newTerrainChunks;
