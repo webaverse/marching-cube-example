@@ -40,8 +40,10 @@ export default () => {
 
     terrainManager.onAddChunk = async (chunkId) => {
         const mesh = terrainManager.getChunkMesh(chunkId);
-        const physicsId = physics.addGeometry(mesh);
-        physicsIdChunkIdPairs.push({ physicsId: physicsId, chunkId: chunkId });
+        if (!!mesh) {
+            const physicsId = physics.addGeometry(mesh);
+            physicsIdChunkIdPairs.push({ physicsId: physicsId, chunkId: chunkId });
+        }
     };
 
     rootScene.add(terrain);
