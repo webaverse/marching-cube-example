@@ -32,7 +32,6 @@ export default () => {
         physicsIdChunkIdPairs.filter(pair => chunkIds.includes(pair.chunkId))
         .forEach(pair => {
             physics.removeGeometry(pair.physicsId);
-            physicsIdChunkIdPairs.re
         });
 
         physicsIdChunkIdPairs = physicsIdChunkIdPairs.filter(pair => !chunkIds.includes(pair.chunkId));
