@@ -1,25 +1,53 @@
-import * as THREE from 'three'; 
+import * as THREE from 'three';
+import { IDTech } from './idTech.js';
 
-export const terrainMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
 
 const textureLoader = new THREE.TextureLoader();
 
-const grassTexture = textureLoader.load('http://127.0.0.1:5501/textures/grasslight-big.jpg')
-const rockTexture = textureLoader.load('http://127.0.0.1:5501/textures/rock_boulder_dry_diff_1k.png');
+export function generateArrayTexture2D(width, height, cell = 16) {
+    return new Promise((resolve, reject) => {
+        new THREE.ImageLoader().load(`${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/grasslight-big.jpg`, (image) => {
+            // use canvas to get the pixel data array of the image
+            var canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(image, 0, 0);
+
+            var imageData = ctx.getImageData(0, 0, width, height);
+            var pixels = new Uint8Array(imageData.data.buffer);
+            const texture2d = new THREE.DataTexture2DArray(pixels, width, height, height / cell);
+            texture2d.format = THREE.RGBAFormat;
+            texture2d.type = THREE.UnsignedByteType;
+            texture2d.wrapS = THREE.RepeatWrapping;
+            texture2d.wrapT = THREE.RepeatWrapping;
+            texture2d.wrapT = THREE.RepeatWrapping;
+            resolve(texture2d);
+        })
+    });
+
+}
+
+
+const grassTexture = textureLoader.load(`${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/grasslight-big.jpg`)
+const rockTexture = textureLoader.load(`${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/rock_boulder_dry_diff_1k.png`);
+
+const Idtech = new IDTech(512, 64);
+Idtech.loadAll();
 
 grassTexture.wrapS = THREE.RepeatWrapping;
 grassTexture.wrapT = THREE.RepeatWrapping;
 rockTexture.wrapS = THREE.RepeatWrapping;
 rockTexture.wrapT = THREE.RepeatWrapping;
+
+export const terrainMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+
 terrainMaterial.onBeforeCompile = (shader, renderer) => {
-    const fs = shader.fragmentShader;
-    const vs = shader.vertexShader;
     shader.uniforms = shader.uniforms || {};
     terrainMaterial.uniforms = shader.uniforms;
     console.log('onBeforeCompile');
-    shader.vertexShader =
-        `
-#define PHONG
+    shader.vertexShader = `
+#define PHONG 
 varying vec3 vViewPosition;
 #include <common>
 #include <uv_pars_vertex>
@@ -32,8 +60,12 @@ varying vec3 vViewPosition;
 #include <morphtarget_pars_vertex>
 #include <skinning_pars_vertex>
 #ifdef USE_TRIPLANETEXTURE
+    attribute float biome;
+
     varying vec3  vtriCoord;
     varying vec3  vtriNormal;
+    varying float vbiome; 
+ 
 #endif
 #include <shadowmap_pars_vertex>
 #include <logdepthbuf_pars_vertex>
@@ -57,14 +89,16 @@ void main() {
     #include <clipping_planes_vertex>
     vViewPosition = - mvPosition.xyz;
     #include <worldpos_vertex>
-    #if defined(USE_TRIPLANETEXTURE)
+    #if defined(USE_TRIPLANETEXTURE)   
+        vbiome = biome;
         vec4 triWorldPosition = vec4( transformed, 1.0 );
         #ifdef USE_INSTANCING
             triWorldPosition = instanceMatrix * triWorldPosition;
         #endif
         triWorldPosition = modelMatrix * triWorldPosition;
         vtriCoord = triWorldPosition.xyz;
-        vtriNormal =  vec3( normal ) ;
+        vtriNormal = vec3(normal);
+
     #endif
     #include <envmap_vertex>
     #include <shadowmap_vertex>
@@ -104,11 +138,12 @@ uniform float opacity;
 #include <specularmap_pars_fragment>
 #include <logdepthbuf_pars_fragment>
 #include <clipping_planes_pars_fragment>
-#ifdef USE_TRIPLANETEXTURE 
+#ifdef USE_TRIPLANETEXTURE   
+    precision highp sampler2DArray; 
+    uniform sampler2DArray terrainArrayTexture; 
+    varying float vbiome; 
     varying vec3 vtriCoord;
-    varying vec3 vtriNormal;
-    uniform sampler2D grassTexture;
-    uniform sampler2D rockTexture; 
+    varying vec3 vtriNormal;  
 #endif
 void main() {
     #include <clipping_planes_fragment>
@@ -117,28 +152,20 @@ void main() {
     vec3 totalEmissiveRadiance = emissive;
     #include <logdepthbuf_fragment>
     #include <map_fragment>
-    #ifdef USE_TRIPLANETEXTURE  
-        vec3 blending =abs(vtriNormal);
-        blending = normalize(max(blending, 0.001)); // Force weights to sum to 1.0
-        float b = (blending.x + blending.y + blending.z);
-        blending /=b;
- 
-        vec4 xaxis,yaxis,zaxis; 
-        xaxis = texture2D(grassTexture, vtriCoord.yz*0.1);
-        yaxis = texture2D(grassTexture, vtriCoord.xz*0.1);
-        zaxis = texture2D(grassTexture, vtriCoord.xy*0.1);
-        vec4 grassTex = xaxis * blending.x + yaxis * blending.y + zaxis * blending.z; 
-    
-        xaxis = texture2D(rockTexture, vtriCoord.yz*0.1);
-        yaxis = texture2D(rockTexture, vtriCoord.xz*0.1);
-        zaxis = texture2D(rockTexture, vtriCoord.xy*0.1);
-        vec4 rockTex = xaxis * blending.x + yaxis * blending.y + zaxis * blending.z; 
-        float amount = smoothstep (0.6,0.8,vtriNormal.y); 
+    #ifdef USE_TRIPLANETEXTURE   
+     
+    vec3 blending =abs(vtriNormal);
+    blending = normalize(max(blending, 0.001)); // Force weights to sum to 1.0
+    float b = (blending.x + blending.y + blending.z);
+    blending /= b;
 
-        vec4 tex =amount* grassTex+(1.0-amount)*rockTex; 
-         
-        // blend the results of the 3 planar projections.
-        diffuseColor *= tex; 
+    vec4 xaxis,yaxis,zaxis;   
+    xaxis = texture(terrainArrayTexture, vec3(vtriCoord.yz*0.5, vbiome));
+    yaxis = texture(terrainArrayTexture, vec3(vtriCoord.xz*0.5, vbiome));
+    zaxis = texture(terrainArrayTexture, vec3(vtriCoord.xy*0.5, vbiome));
+    vec4 terrainColor= xaxis * blending.x + yaxis * blending.y + zaxis * blending.z; 
+    diffuseColor  *= terrainColor; 
+
     #endif
     #include <color_fragment>
     #include <alphamap_fragment>
@@ -163,7 +190,7 @@ void main() {
 }`  ;
 
     shader.defines = shader.defines || {};
-    shader.uniforms.grassTexture = { value: grassTexture };
-    shader.uniforms.rockTexture = { value: rockTexture };
+    shader.uniforms.terrainArrayTexture = { value: Idtech.texture };
+
     shader.defines['USE_TRIPLANETEXTURE'] = '';
 }

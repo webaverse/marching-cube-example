@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-// import { terrainMaterial } from './material.js';
+import { terrainMaterial } from './material.js';
 
 export class TerrainManager {
 
@@ -82,7 +82,7 @@ export class TerrainManager {
 		}
 
 		this.mesh = new THREE.Mesh(
-			this.geometry, [new THREE.MeshLambertMaterial({ color: 0xff0000, wireframe: false })]
+			this.geometry, [terrainMaterial]
 		);
 
 		this.mesh.frustumCulled = false;
