@@ -32,10 +32,9 @@ export default () => {
 
     terrainManager.onRemoveChunks = async (chunkIds) => {
         physicsIdChunkIdPairs.filter(pair => chunkIds.includes(pair.chunkId))
-            .forEach(pair => {
-                physics.removeGeometry(pair.physicsId);
-                physicsIdChunkIdPairs.re
-            });
+        .forEach(pair => {
+            physics.removeGeometry(pair.physicsId);
+        });
 
         physicsIdChunkIdPairs = physicsIdChunkIdPairs.filter(pair => !chunkIds.includes(pair.chunkId));
     };
