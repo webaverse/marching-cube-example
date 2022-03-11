@@ -62,9 +62,9 @@ varying vec3 vViewPosition;
 #ifdef USE_TRIPLANETEXTURE
     attribute float biome;
 
-    varying vec3  vtriCoord;
-    varying vec3  vtriNormal;
-    varying float vbiome; 
+    out vec3  vtriCoord;
+    out vec3  vtriNormal;
+    flat out float vbiome; 
  
 #endif
 #include <shadowmap_pars_vertex>
@@ -90,7 +90,7 @@ void main() {
     vViewPosition = - mvPosition.xyz;
     #include <worldpos_vertex>
     #if defined(USE_TRIPLANETEXTURE)   
-        vbiome = biome;
+        vbiome = biome;//int(round());
         vec4 triWorldPosition = vec4( transformed, 1.0 );
         #ifdef USE_INSTANCING
             triWorldPosition = instanceMatrix * triWorldPosition;
@@ -141,9 +141,9 @@ uniform float opacity;
 #ifdef USE_TRIPLANETEXTURE   
     precision highp sampler2DArray; 
     uniform sampler2DArray terrainArrayTexture; 
-    varying float vbiome; 
-    varying vec3 vtriCoord;
-    varying vec3 vtriNormal;  
+    flat in float vbiome; 
+    in vec3 vtriCoord;
+    in vec3 vtriNormal;  
 #endif
 void main() {
     #include <clipping_planes_fragment>
@@ -160,9 +160,9 @@ void main() {
     blending /= b;
 
     vec4 xaxis,yaxis,zaxis;   
-    xaxis = texture(terrainArrayTexture, vec3(vtriCoord.yz*0.5, vbiome));
-    yaxis = texture(terrainArrayTexture, vec3(vtriCoord.xz*0.5, vbiome));
-    zaxis = texture(terrainArrayTexture, vec3(vtriCoord.xy*0.5, vbiome));
+    xaxis = texture(terrainArrayTexture, vec3(vtriCoord.yz*0.04, vbiome));
+    yaxis = texture(terrainArrayTexture, vec3(vtriCoord.xz*0.04, vbiome));
+    zaxis = texture(terrainArrayTexture, vec3(vtriCoord.xy*0.04, vbiome));
     vec4 terrainColor= xaxis * blending.x + yaxis * blending.y + zaxis * blending.z; 
     diffuseColor  *= terrainColor; 
 
