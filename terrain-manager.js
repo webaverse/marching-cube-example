@@ -184,6 +184,10 @@ export class TerrainManager {
 
 		const buf = this.bufferFactory;
 
+		if (buf.vertexRanges[2 * slots[0] + 1] === 0) {
+			return null;
+		}
+
 		this.indexAttribute.updateRange = {
 			offset: buf.indexRanges[slots[1] * 2],
 			count: buf.indexRanges[slots[1] * 2 + 1]
