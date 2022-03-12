@@ -64,7 +64,7 @@ export class TerrainManager {
 
 		this.biomeAttribute = new THREE.Float32BufferAttribute();
 		this.biomeAttribute.array = this.bufferFactory.biomes;
-		this.biomeAttribute.itemSize = 1;
+		this.biomeAttribute.itemSize = 3;
 		this.biomeAttribute.count = this.bufferFactory.biomes.length;
 		this.biomeAttribute.setUsage( THREE.DynamicDrawUsage );
 
