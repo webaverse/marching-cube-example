@@ -60,13 +60,12 @@ varying vec3 vViewPosition;
 #include <morphtarget_pars_vertex>
 #include <skinning_pars_vertex>
 #ifdef USE_TRIPLANETEXTURE
-    attribute vec3 biome;
+    attribute float biome;
 
     out vec3  vtriCoord;
     out vec3  vtriNormal;
-    flat out float vbiome0; 
-    flat out float vbiome1; 
-    out float biomeAmount;
+    flat out float vbiome; 
+ 
 #endif
 #include <shadowmap_pars_vertex>
 #include <logdepthbuf_pars_vertex>
@@ -91,9 +90,7 @@ void main() {
     vViewPosition = - mvPosition.xyz;
     #include <worldpos_vertex>
     #if defined(USE_TRIPLANETEXTURE)   
-        vbiome0 = biome.x;
-        vbiome1 = biome.y;
-        biomeAmount = biome.z;
+        vbiome = biome;//int(round());
         vec4 triWorldPosition = vec4( transformed, 1.0 );
         #ifdef USE_INSTANCING
             triWorldPosition = instanceMatrix * triWorldPosition;
@@ -144,10 +141,7 @@ uniform float opacity;
 #ifdef USE_TRIPLANETEXTURE   
     precision highp sampler2DArray; 
     uniform sampler2DArray terrainArrayTexture; 
-
-    flat in float vbiome0; 
-    flat in float vbiome1; 
-    in float biomeAmount;
+    flat in float vbiome; 
     in vec3 vtriCoord;
     in vec3 vtriNormal;  
 #endif
@@ -166,17 +160,10 @@ void main() {
     blending /= b;
 
     vec4 xaxis,yaxis,zaxis;   
-    xaxis = texture(terrainArrayTexture, vec3(vtriCoord.yz*0.04, vbiome0));
-    yaxis = texture(terrainArrayTexture, vec3(vtriCoord.xz*0.04, vbiome0));
-    zaxis = texture(terrainArrayTexture, vec3(vtriCoord.xy*0.04, vbiome0));
-    vec4 biome0Color= xaxis * blending.x + yaxis * blending.y + zaxis * blending.z; 
-    
-    xaxis = texture(terrainArrayTexture, vec3(vtriCoord.yz*0.04, vbiome1));
-    yaxis = texture(terrainArrayTexture, vec3(vtriCoord.xz*0.04, vbiome1));
-    zaxis = texture(terrainArrayTexture, vec3(vtriCoord.xy*0.04, vbiome1));
-    vec4 biome1Color= xaxis * blending.x + yaxis * blending.y + zaxis * blending.z; 
-    
-    vec4 terrainColor = biomeAmount * biome0Color+  (1.0 - biomeAmount) * biome1Color;
+    xaxis = texture(terrainArrayTexture, vec3(vtriCoord.yz*0.04, vbiome));
+    yaxis = texture(terrainArrayTexture, vec3(vtriCoord.xz*0.04, vbiome));
+    zaxis = texture(terrainArrayTexture, vec3(vtriCoord.xy*0.04, vbiome));
+    vec4 terrainColor= xaxis * blending.x + yaxis * blending.y + zaxis * blending.z; 
     diffuseColor  *= terrainColor; 
 
     #endif
