@@ -207,8 +207,8 @@ export class TerrainManager {
 		this.normalAttribute.needsUpdate = true;
 
 		this.biomeAttribute.updateRange = {
-			offset: buf.vertexRanges[slots[0] * 2],
-			count: buf.vertexRanges[slots[0] * 2 + 1],
+			offset: buf.vertexRanges[slots[0] * 2] * 3,
+			count: buf.vertexRanges[slots[0] * 2 + 1] * 3,
 		};
 		this.biomeAttribute.needsUpdate = true;
 
