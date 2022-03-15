@@ -21,11 +21,11 @@ export class TerrainManager {
 		 * if following parameters are too small, memory areas of chunks can be overlaid
 		 * if too big, memory will be over allocated;
 		 */
-		this.vertexBufferSizeParam = 20;
-		this.indexBufferSizeParam = 20;
+		this.vertexBufferSizeParam = 10;
+		this.indexBufferSizeParam = 10;
 
-		this.onAddChunk = () => {};
-		this.onRemoveChunks = () => {};
+		this.onAddChunk = () => { };
+		this.onRemoveChunks = () => { };
 
 		this.init();
 	}
@@ -48,30 +48,36 @@ export class TerrainManager {
 		this.indexAttribute.array = this.bufferFactory.indices;
 		this.indexAttribute.itemSize = 1;
 		this.indexAttribute.count = this.bufferFactory.indices.length;
-		this.indexAttribute.setUsage( THREE.DynamicDrawUsage );
+		this.indexAttribute.setUsage(THREE.DynamicDrawUsage);
 
 		this.positionAttribute = new THREE.Float32BufferAttribute();
 		this.positionAttribute.array = this.bufferFactory.positions;
 		this.positionAttribute.itemSize = 3;
 		this.positionAttribute.count = this.bufferFactory.positions.length / 3;
-		this.positionAttribute.setUsage( THREE.DynamicDrawUsage );
+		this.positionAttribute.setUsage(THREE.DynamicDrawUsage);
 
 		this.normalAttribute = new THREE.Float32BufferAttribute();
 		this.normalAttribute.array = this.bufferFactory.normals;
 		this.normalAttribute.itemSize = 3;
 		this.normalAttribute.count = this.bufferFactory.normals.length / 3;
-		this.normalAttribute.setUsage( THREE.DynamicDrawUsage );
+		this.normalAttribute.setUsage(THREE.DynamicDrawUsage);
 
-		this.biomeAttribute = new THREE.Float32BufferAttribute();
-		this.biomeAttribute.array = this.bufferFactory.biomes;
-		this.biomeAttribute.itemSize = 12;
-		this.biomeAttribute.count = this.bufferFactory.biomes.length;
-		this.biomeAttribute.setUsage( THREE.DynamicDrawUsage );
+		// this.biomeAttribute = new THREE.Float32BufferAttribute();
+		// this.biomeAttribute.array = this.bufferFactory.biomes;
+		// this.biomeAttribute.itemSize = 12;
+		// this.biomeAttribute.count = this.bufferFactory.biomes.length;
+		// this.biomeAttribute.setUsage(THREE.DynamicDrawUsage);
 
 		this.geometry.setIndex(this.indexAttribute);
 		this.geometry.setAttribute('position', this.positionAttribute);
 		this.geometry.setAttribute('normal', this.normalAttribute);
-		this.geometry.setAttribute('biome', this.biomeAttribute);
+		// this.geometry.setAttribute('biome', this.biomeAttribute);
+		this.biomeAttribute = new THREE.InterleavedBuffer(this.bufferFactory.biomes/* biome buffer */, 12);
+		this.biomeAttribute.setUsage(THREE.DynamicDrawUsage);
+
+		this.geometry.setAttribute('biome0', new THREE.InterleavedBufferAttribute(this.biomeAttribute , 4, 0));
+		this.geometry.setAttribute('biome1', new THREE.InterleavedBufferAttribute(this.biomeAttribute , 4, 4));
+		this.geometry.setAttribute('biome2', new THREE.InterleavedBufferAttribute(this.biomeAttribute , 4, 8));
 
 		this.geometry.clearGroups();
 

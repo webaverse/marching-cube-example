@@ -39,7 +39,7 @@ grassTexture.wrapS = THREE.RepeatWrapping;
 grassTexture.wrapT = THREE.RepeatWrapping;
 rockTexture.wrapS = THREE.RepeatWrapping;
 rockTexture.wrapT = THREE.RepeatWrapping;
-
+THREE.InterleavedBufferAttribute
 export const terrainMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
 
 terrainMaterial.onBeforeCompile = (shader, renderer) => {
@@ -60,12 +60,16 @@ varying vec3 vViewPosition;
 #include <morphtarget_pars_vertex>
 #include <skinning_pars_vertex>
 #ifdef USE_TRIPLANETEXTURE
-    attribute mat4x3 biome;
+    attribute vec4 biome0;
+    attribute vec4 biome1;
+    attribute vec4 biome2;
 
     out vec3  vtriCoord;
     out vec3  vtriNormal;
     out float vTemperature; 
-    out mat4x3  vbiome;  
+    out vec4  vbiome0;  
+    out vec4  vbiome1;  
+    out vec4  vbiome2;  
 #endif
 #include <shadowmap_pars_vertex>
 #include <logdepthbuf_pars_vertex>
@@ -90,15 +94,16 @@ void main() {
     vViewPosition = - mvPosition.xyz;
     #include <worldpos_vertex>
     #if defined(USE_TRIPLANETEXTURE)    
-        vbiome = biome;
+        vbiome0 = biome0;
+        vbiome1 = biome1;
+        vbiome2 = biome2;
         vec4 triWorldPosition = vec4( transformed, 1.0 );
         #ifdef USE_INSTANCING
             triWorldPosition = instanceMatrix * triWorldPosition;
         #endif
         triWorldPosition = modelMatrix * triWorldPosition;
         vtriCoord = triWorldPosition.xyz;
-        vtriNormal = vec3(normal);
-
+        vtriNormal = vec3(normal); 
     #endif
     #include <envmap_vertex>
     #include <shadowmap_vertex>
@@ -162,7 +167,9 @@ uniform float opacity;
 
      
 
-    in mat4x3 vbiome;  
+    in vec4  vbiome0;  
+    in vec4  vbiome1;  
+    in vec4  vbiome2; 
     in vec3 vtriCoord;
     in vec3 vtriNormal;  
 
@@ -176,8 +183,8 @@ uniform float opacity;
     }
 
    float calcBiome(float temperature,float humidity,float biomes[256]){
-    float t = pow(temperature, 1.3) * 16.0;
-    float h = pow(humidity, 1.3) * 16.0; 
+    float t = floor( pow(temperature, 1.3) * 16.0);
+    float h = floor( pow(humidity, 1.3) * 16.0); 
     float biome= biomes[int(round(t + 16.0 * h))];
     return biome;
    }
@@ -199,13 +206,13 @@ void main() {
     //calc biomes; 
     float biomes[5] = float[5](0.0,0.0,0.0,0.0,0.0);
     vec4 texColor[5]; 
-    biomes[0] = calcBiome(vbiome[0][0],vbiome[1][1],B_T_H);
-    biomes[1] = calcBiome(vbiome[0][1],vbiome[1][2],B_T_H);
-    biomes[2] = calcBiome(vbiome[0][2],vbiome[1][3],B_T_H);
-    biomes[3] = calcBiome(vbiome[0][3],vbiome[2][0],B_T_H);
-    biomes[4] = calcBiome(vbiome[1][0],vbiome[2][1],B_T_H);
+    biomes[0] = calcBiome(vbiome0[0],vbiome1[1],B_T_H);
+    biomes[1] = calcBiome(vbiome0[1],vbiome1[2],B_T_H);
+    biomes[2] = calcBiome(vbiome0[2],vbiome1[3],B_T_H);
+    biomes[3] = calcBiome(vbiome0[3],vbiome2[0],B_T_H);
+    biomes[4] = calcBiome(vbiome1[0],vbiome2[1],B_T_H);
  
-    vec4 terrainColor = vec4();
+    vec4 terrainColor = vec4(0.0);
     for(int bi =0;bi<5;bi++){ ;
       texColor[bi] = triplaneTexture(terrainArrayTexture,vtriCoord,blending,biomes[bi],0.04) ;
       terrainColor+=texColor[bi];
