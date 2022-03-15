@@ -162,7 +162,7 @@ uniform float opacity;
 
      
 
-    in mat4 vbiome;  
+    in mat4x3 vbiome;  
     in vec3 vtriCoord;
     in vec3 vtriNormal;  
 
