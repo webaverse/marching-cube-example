@@ -94,8 +94,8 @@ void main() {
     #if defined(USE_TRIPLANETEXTURE)    
         vTemperature = biome.x; 
         vHumidity = biome.y; 
-        vOceanRandom = biome.z;
-        vRiverRandom = biome.w; 
+        vRiverRandom = biome.z; 
+        vOceanRandom = biome.w;
         vec4 triWorldPosition = vec4( transformed, 1.0 );
         #ifdef USE_INSTANCING
             triWorldPosition = instanceMatrix * triWorldPosition;
@@ -215,18 +215,19 @@ void main() {
 
     zt = floor(t);
     zh = floor(h);
-    row_b0 = zt; 
-    row_b1 = zt + 1.0; 
-    col_b0 = zh; 
-    col_b1 = zh + 1.0; 
+    row_b0 = clamp(zt, 0.0 , 15.0); 
+    row_b1 = clamp(zt + 1.0 , 0.0 , 15.0); 
+    col_b0 = clamp(zh, 0.0 , 15.0); 
+    col_b1 = clamp(zh + 1.0 , 0.0 , 15.0); 
 
-    row_amount = t-zt;
-    col_amount = t-zt;
+    row_amount = t - zt;
+    col_amount = t - zt;
 
-    biome00 = B_T_H[int(zt + 16.0 * zh)];
-    biome01 = B_T_H[int(zt + 1.0 + 16.0 * zh)];
-    biome10 = B_T_H[int(zt + 16.0 * (zh + 1.0))];
-    biome11 = B_T_H[int(zt + 1.0 + 16.0 * (zh + 1.0))];
+
+    biome00 = B_T_H[int(round(zt + 16.0 * zh))];
+    biome01 = B_T_H[int(round(col_b1 + 16.0 * zh))];
+    biome10 = B_T_H[int(round(zt + 16.0 * row_b1))];
+    biome11 = B_T_H[int(round(col_b1 + 16.0 * row_b1))];
 
     vec4 te00 = triplaneTexture(terrainArrayTexture,vtriCoord,blending,biome00,0.04);  
     vec4 te01 = triplaneTexture(terrainArrayTexture,vtriCoord,blending,biome01,0.04);  
@@ -246,22 +247,29 @@ void main() {
     vec4 biomeColor = mix(cmix , rmix ,r_amount/(r_amount+ c_amount));
 
     
-    float temperatureSp = ((4.0 * 16.0) / 255.0);
     float oceanSp = (80.0 / 255.0);
-    float range = 0.022;
-    if (vOceanRandom < oceanSp) {
-      vec4 oceanColor = triplaneTexture(terrainArrayTexture,vtriCoord,blending,pow(vTemperature, 1.3) < temperatureSp?10.0:0.0,0.04);
-      biomeColor = mix(biomeColor,oceanColor,smoothstep(-0.05, 0.0 ,pow(vTemperature, 1.3) - temperatureSp));
-    } else {
-      float n = vRiverRandom;
-      float range = 0.022;
-      if (n > 0.5 - range && n < 0.5 + range) {
-        vec4 riverColor = triplaneTexture(terrainArrayTexture,vtriCoord,blending, pow(vTemperature, 1.3) < temperatureSp?11.0:0.7,0.04);
-        biomeColor = mix(biomeColor,riverColor,smoothstep(-0.05, 0.0 ,pow(vTemperature, 1.3) - temperatureSp));
-      }
-    }  
+    float temperatureSp = ((4.0 * 16.0) / 255.0);
+    if (vOceanRandom < oceanSp ) {
+      vec4  oceanColor = triplaneTexture(terrainArrayTexture,vtriCoord,blending,pow(vTemperature, 1.3) < temperatureSp?10.0:0.0,0.04);
+      biomeColor = oceanColor; //mix(biomeColor,oceanColor,smoothstep(-0.05, 0.0 ,pow(vTemperature, 1.3) - temperatureSp));
+    } 
+    // else {
+    //   float range = 0.022;
+    //   float n = vRiverRandom;
+    //   float range = 0.022;
+    //   if (n > 0.5 - range && n < 0.5 + range) {
+    //     vec4 riverColor = triplaneTexture(terrainArrayTexture,vtriCoord,blending, pow(vTemperature, 1.3) < temperatureSp?11.0:0.7,0.04);
+    //     biomeColor = mix(biomeColor,riverColor,smoothstep(-0.05, 0.0 ,pow(vTemperature, 1.3) - temperatureSp));
+    //   }
+    // }  
      
-    diffuseColor *= biomeColor; 
+    
+    vec4 te00_10l = triplaneTexture(terrainArrayTexture,vtriCoord+vec3(-1.0,0.0,0.0),blending,biome00,0.04);  
+    vec4 te00_10r = triplaneTexture(terrainArrayTexture,vtriCoord+vec3(1.0,0.0,0.0),blending,biome00,0.04);   
+    vec4 te00_10t = triplaneTexture(terrainArrayTexture,vtriCoord+vec3(0.0,0.0,-1.0),blending,biome00,0.04);  
+    vec4 te00_10b = triplaneTexture(terrainArrayTexture,vtriCoord+vec3(0.0,0.0,1.0),blending,biome00,0.04); 
+
+    diffuseColor = te10; 
     
     #endif
     #include <color_fragment>
