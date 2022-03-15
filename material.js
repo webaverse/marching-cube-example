@@ -60,12 +60,12 @@ varying vec3 vViewPosition;
 #include <morphtarget_pars_vertex>
 #include <skinning_pars_vertex>
 #ifdef USE_TRIPLANETEXTURE
-    attribute mat4 biome;
+    attribute mat4x3 biome;
 
     out vec3  vtriCoord;
     out vec3  vtriNormal;
     out float vTemperature; 
-    out mat4  vbiome;  
+    out mat4x3  vbiome;  
 #endif
 #include <shadowmap_pars_vertex>
 #include <logdepthbuf_pars_vertex>
