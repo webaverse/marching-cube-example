@@ -217,8 +217,15 @@ void main() {
       texColor[bi] = triplaneTexture(terrainArrayTexture,vtriCoord,blending,biomes[bi],0.04) ;
       terrainColor+=texColor[bi];
     } 
+    terrainColor = terrainColor / 5.0;
+
+    float oceanRandom =  vbiome2[3];
+    float riverRandom =  vbiome2[2];
+    if(oceanRandom < 80.0/255.0){
+      terrainColor = triplaneTexture(terrainArrayTexture,vtriCoord,blending,0.0,0.04);
+    }
    
-    diffuseColor *= terrainColor / 5.0; 
+    diffuseColor *= terrainColor; 
     
     #endif
     #include <color_fragment>
