@@ -64,7 +64,7 @@ export class TerrainManager {
 
 		this.biomeAttribute = new THREE.Float32BufferAttribute();
 		this.biomeAttribute.array = this.bufferFactory.biomes;
-		this.biomeAttribute.itemSize = 4;
+		this.biomeAttribute.itemSize = 12;
 		this.biomeAttribute.count = this.bufferFactory.biomes.length;
 		this.biomeAttribute.setUsage( THREE.DynamicDrawUsage );
 
@@ -207,8 +207,8 @@ export class TerrainManager {
 		this.normalAttribute.needsUpdate = true;
 
 		this.biomeAttribute.updateRange = {
-			offset: buf.vertexRanges[slots[0] * 2] * 4,
-			count: buf.vertexRanges[slots[0] * 2 + 1] * 4,
+			offset: buf.vertexRanges[slots[0] * 2] * 12,
+			count: buf.vertexRanges[slots[0] * 2 + 1] * 12,
 		};
 		this.biomeAttribute.needsUpdate = true;
 
