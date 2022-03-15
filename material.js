@@ -89,7 +89,8 @@ void main() {
     #include <clipping_planes_vertex>
     vViewPosition = - mvPosition.xyz;
     #include <worldpos_vertex>
-    #if defined(USE_TRIPLANETEXTURE)     
+    #if defined(USE_TRIPLANETEXTURE)    
+        vbiome = biome;
         vec4 triWorldPosition = vec4( transformed, 1.0 );
         #ifdef USE_INSTANCING
             triWorldPosition = instanceMatrix * triWorldPosition;
@@ -173,6 +174,13 @@ uniform float opacity;
       vec4 color= xaxis * blending.x + yaxis * blending.y + zaxis * blending.z; 
       return color;
     }
+
+   float calcBiome(float temperature,float humidity,float biomes[256]){
+    float t = pow(temperature, 1.3) * 16.0;
+    float h = pow(humidity, 1.3) * 16.0; 
+    float biome= biomes[int(round(t + 16.0 * h))];
+    return biome;
+   }
 #endif
 void main() {
     #include <clipping_planes_fragment>
@@ -188,80 +196,22 @@ void main() {
     float b = (blending.x + blending.y + blending.z);
     blending /= b; 
 
-    //calc biomes;
-    float biome00 = 0.0; 
-    float biome10 = 0.0; 
-    float biome01 = 0.0; 
-    float biome11 = 0.0; 
-    float zt;
-    float zh;
-    float row_b0;
-    float row_b1;
-    float col_b0;
-    float col_b1;
-    float row_amount;
-    float col_amount; 
-
-    float t = pow(vTemperature, 1.3) * 16.0 ;
-    float h = pow(vHumidity, 1.3) * 16.0 ;
-
-    zt = floor(t);
-    zh = floor(h);
-    row_b0 = clamp(zt, 0.0 , 15.0); 
-    row_b1 = clamp(zt + 1.0 , 0.0 , 15.0); 
-    col_b0 = clamp(zh, 0.0 , 15.0); 
-    col_b1 = clamp(zh + 1.0 , 0.0 , 15.0); 
-
-    row_amount = t - zt;
-    col_amount = t - zt;
-
-
-    biome00 = B_T_H[int(round(zt + 16.0 * zh))];
-    biome01 = B_T_H[int(round(col_b1 + 16.0 * zh))];
-    biome10 = B_T_H[int(round(zt + 16.0 * row_b1))];
-    biome11 = B_T_H[int(round(col_b1 + 16.0 * row_b1))];
-
-    vec4 te00 = triplaneTexture(terrainArrayTexture,vtriCoord,blending,biome00,0.04);  
-    vec4 te01 = triplaneTexture(terrainArrayTexture,vtriCoord,blending,biome01,0.04);  
-    vec4 te10 = triplaneTexture(terrainArrayTexture,vtriCoord,blending,biome10,0.04);  
-    vec4 te11 = triplaneTexture(terrainArrayTexture,vtriCoord,blending,biome11,0.04);  
-
-    float r_amount = smoothstep(0.3,0.7,row_amount);
-    float c_amount = smoothstep(0.3,0.7,col_amount); 
-
-    vec4 r0 = mix(te00,te01,r_amount);
-    vec4 r1 = mix(te10,te11,r_amount);
-    vec4 c0 = mix(te00,te10,c_amount); 
-    vec4 c1 = mix(te01,te11,c_amount); 
-    vec4 cmix = mix(c0,c1,r_amount); 
-    vec4 rmix = mix(r0,r1,c_amount);  
-
-    vec4 biomeColor = mix(cmix , rmix ,r_amount/(r_amount+ c_amount));
-
-    
-    float oceanSp = (80.0 / 255.0);
-    float temperatureSp = ((4.0 * 16.0) / 255.0);
-    if (vOceanRandom < oceanSp ) {
-      vec4  oceanColor = triplaneTexture(terrainArrayTexture,vtriCoord,blending,pow(vTemperature, 1.3) < temperatureSp?10.0:0.0,0.04);
-      biomeColor = oceanColor; //mix(biomeColor,oceanColor,smoothstep(-0.05, 0.0 ,pow(vTemperature, 1.3) - temperatureSp));
+    //calc biomes; 
+    float biomes[5] = float[5](0.0,0.0,0.0,0.0,0.0);
+    vec4 texColor[5]; 
+    biomes[0] = calcBiome(vbiome[0][0],vbiome[1][1],B_T_H);
+    biomes[1] = calcBiome(vbiome[0][1],vbiome[1][2],B_T_H);
+    biomes[2] = calcBiome(vbiome[0][2],vbiome[1][3],B_T_H);
+    biomes[3] = calcBiome(vbiome[0][3],vbiome[2][0],B_T_H);
+    biomes[4] = calcBiome(vbiome[1][0],vbiome[2][1],B_T_H);
+ 
+    vec4 terrainColor = vec4();
+    for(int bi =0;bi<5;bi++){ ;
+      texColor[bi] = triplaneTexture(terrainArrayTexture,vtriCoord,blending,biomes[bi],0.04) ;
+      terrainColor+=texColor[bi];
     } 
-    // else {
-    //   float range = 0.022;
-    //   float n = vRiverRandom;
-    //   float range = 0.022;
-    //   if (n > 0.5 - range && n < 0.5 + range) {
-    //     vec4 riverColor = triplaneTexture(terrainArrayTexture,vtriCoord,blending, pow(vTemperature, 1.3) < temperatureSp?11.0:0.7,0.04);
-    //     biomeColor = mix(biomeColor,riverColor,smoothstep(-0.05, 0.0 ,pow(vTemperature, 1.3) - temperatureSp));
-    //   }
-    // }  
-     
-    
-    vec4 te00_10l = triplaneTexture(terrainArrayTexture,vtriCoord+vec3(-1.0,0.0,0.0),blending,biome00,0.04);  
-    vec4 te00_10r = triplaneTexture(terrainArrayTexture,vtriCoord+vec3(1.0,0.0,0.0),blending,biome00,0.04);   
-    vec4 te00_10t = triplaneTexture(terrainArrayTexture,vtriCoord+vec3(0.0,0.0,-1.0),blending,biome00,0.04);  
-    vec4 te00_10b = triplaneTexture(terrainArrayTexture,vtriCoord+vec3(0.0,0.0,1.0),blending,biome00,0.04); 
-
-    diffuseColor = te10; 
+   
+    diffuseColor *= terrainColor / 5.0; 
     
     #endif
     #include <color_fragment>
