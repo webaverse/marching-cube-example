@@ -67,6 +67,7 @@ varying vec3 vViewPosition;
     flat out float vbiome0; 
     flat out float vbiome1; 
     out float biomeAmount;
+    out float fbiome0;
 #endif
 #include <shadowmap_pars_vertex>
 #include <logdepthbuf_pars_vertex>
@@ -94,6 +95,7 @@ void main() {
         vbiome0 = biome.x;
         vbiome1 = biome.y;
         biomeAmount = biome.z;
+        fbiome0 = biome.x;
         vec4 triWorldPosition = vec4( transformed, 1.0 );
         #ifdef USE_INSTANCING
             triWorldPosition = instanceMatrix * triWorldPosition;
@@ -146,8 +148,9 @@ uniform float opacity;
     uniform sampler2DArray terrainArrayTexture; 
 
     flat in float vbiome0; 
-    flat in float vbiome1; 
+    flat in float vbiome1;
     in float biomeAmount;
+    in float fbiome0;
     in vec3 vtriCoord;
     in vec3 vtriNormal;  
 #endif
@@ -176,7 +179,11 @@ void main() {
     zaxis = texture(terrainArrayTexture, vec3(vtriCoord.xy*0.04, vbiome1));
     vec4 biome1Color= xaxis * blending.x + yaxis * blending.y + zaxis * blending.z; 
     
-    vec4 terrainColor = biomeAmount * biome0Color+  (1.0 - biomeAmount) * biome1Color;
+    vec4 terrainColor = biomeAmount * biome0Color + (1.0 - biomeAmount) * biome1Color;
+    if (abs(fbiome0 - vbiome0) > 0.01) {
+        terrainColor = 0.5 * biome0Color+ 0.5 * biome1Color;
+    }
+
     diffuseColor  *= terrainColor; 
 
     #endif
