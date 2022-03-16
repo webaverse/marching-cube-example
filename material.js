@@ -47,7 +47,7 @@ terrainMaterial.onBeforeCompile = (shader, renderer) => {
     terrainMaterial.uniforms = shader.uniforms;
     console.log('onBeforeCompile');
     shader.vertexShader = `
-#define PHONG 
+#define PHONG
 varying vec3 vViewPosition;
 #include <common>
 #include <uv_pars_vertex>
@@ -64,8 +64,8 @@ varying vec3 vViewPosition;
 
     out vec3  vtriCoord;
     out vec3  vtriNormal;
-    flat out float vbiome0; 
-    flat out float vbiome1; 
+    flat out float vbiome0;
+    flat out float vbiome1;
     out float biomeAmount;
     out float fbiome0;
 #endif
@@ -91,7 +91,7 @@ void main() {
     #include <clipping_planes_vertex>
     vViewPosition = - mvPosition.xyz;
     #include <worldpos_vertex>
-    #if defined(USE_TRIPLANETEXTURE)   
+    #if defined(USE_TRIPLANETEXTURE)
         vbiome0 = biome.x;
         vbiome1 = biome.y;
         biomeAmount = biome.z;
@@ -143,16 +143,16 @@ uniform float opacity;
 #include <specularmap_pars_fragment>
 #include <logdepthbuf_pars_fragment>
 #include <clipping_planes_pars_fragment>
-#ifdef USE_TRIPLANETEXTURE   
-    precision highp sampler2DArray; 
-    uniform sampler2DArray terrainArrayTexture; 
+#ifdef USE_TRIPLANETEXTURE
+    precision highp sampler2DArray;
+    uniform sampler2DArray terrainArrayTexture;
 
-    flat in float vbiome0; 
+    flat in float vbiome0;
     flat in float vbiome1;
     in float biomeAmount;
     in float fbiome0;
     in vec3 vtriCoord;
-    in vec3 vtriNormal;  
+    in vec3 vtriNormal;
 #endif
 void main() {
     #include <clipping_planes_fragment>
@@ -161,30 +161,30 @@ void main() {
     vec3 totalEmissiveRadiance = emissive;
     #include <logdepthbuf_fragment>
     #include <map_fragment>
-    #ifdef USE_TRIPLANETEXTURE   
-     
+    #ifdef USE_TRIPLANETEXTURE
+
     vec3 blending =abs(vtriNormal);
     blending = normalize(max(blending, 0.001)); // Force weights to sum to 1.0
     float b = (blending.x + blending.y + blending.z);
     blending /= b;
 
-    vec4 xaxis,yaxis,zaxis;   
+    vec4 xaxis,yaxis,zaxis;
     xaxis = texture(terrainArrayTexture, vec3(vtriCoord.yz*0.04, vbiome0));
     yaxis = texture(terrainArrayTexture, vec3(vtriCoord.xz*0.04, vbiome0));
     zaxis = texture(terrainArrayTexture, vec3(vtriCoord.xy*0.04, vbiome0));
-    vec4 biome0Color= xaxis * blending.x + yaxis * blending.y + zaxis * blending.z; 
-    
+    vec4 biome0Color= xaxis * blending.x + yaxis * blending.y + zaxis * blending.z;
+
     xaxis = texture(terrainArrayTexture, vec3(vtriCoord.yz*0.04, vbiome1));
     yaxis = texture(terrainArrayTexture, vec3(vtriCoord.xz*0.04, vbiome1));
     zaxis = texture(terrainArrayTexture, vec3(vtriCoord.xy*0.04, vbiome1));
-    vec4 biome1Color= xaxis * blending.x + yaxis * blending.y + zaxis * blending.z; 
-    
+    vec4 biome1Color= xaxis * blending.x + yaxis * blending.y + zaxis * blending.z;
+
     vec4 terrainColor = biomeAmount * biome0Color + (1.0 - biomeAmount) * biome1Color;
     if (abs(fbiome0 - vbiome0) > 0.01) {
         terrainColor = 0.5 * biome0Color+ 0.5 * biome1Color;
     }
 
-    diffuseColor  *= terrainColor; 
+    diffuseColor  *= terrainColor;
 
     #endif
     #include <color_fragment>
