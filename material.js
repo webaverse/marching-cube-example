@@ -35,8 +35,7 @@ const rockTexture = textureLoader.load(`${import.meta.url.replace(/(\/)[^\/]*$/,
 
 const IdtechBasic = new IDTech(512, 64);
 IdtechBasic.loadAll('textures/terrain/terrain ');
-const IdtechNormal = new IDTech(512, 64);
-debugger
+const IdtechNormal = new IDTech(512, 64); 
 IdtechNormal.loadAll('textures/terrainnormal/terrain normal ');
 
 grassTexture.wrapS = THREE.RepeatWrapping;

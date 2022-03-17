@@ -13,8 +13,8 @@ export class IDTech {
         this.texture.wrapT = THREE.MirroredRepeatWrapping
         this.texture.format = THREE.RGBAFormat
         this.texture.type = THREE.UnsignedByteType;
-        this.texture.minFilter = THREE.LinearFilter
-        this.texture.magFilter = THREE.LinearMipMapLinearFilter
+        this.texture.minFilter = THREE.LinearMipMapLinearFilter
+        this.texture.magFilter = THREE.LinearFilter
         // this.texture.encoding = THREE.sRGBEncoding;
         this.loadDic = {};
     }
@@ -37,7 +37,7 @@ export class IDTech {
                 this.texture.needsUpdate = true;
                 this.loadDic[id] = true;
             }, undefined, () => {
-                
+
              });
 
         }
