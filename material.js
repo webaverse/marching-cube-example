@@ -5,26 +5,27 @@ import { IDTech } from './idTech.js';
 const textureLoader = new THREE.TextureLoader();
 
 export function generateArrayTexture2D(width, height, cell = 16) {
-    return new Promise((resolve, reject) => {
-        new THREE.ImageLoader().load(`${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/grasslight-big.jpg`, (image) => {
-            // use canvas to get the pixel data array of the image
-            var canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            var ctx = canvas.getContext('2d');
-            ctx.drawImage(image, 0, 0);
+  return new Promise((resolve, reject) => {
+    new THREE.ImageLoader().load(`${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/grasslight-big.jpg`, (image) => {
+      // use canvas to get the pixel data array of the image
+      var canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(image, 0, 0);
 
-            var imageData = ctx.getImageData(0, 0, width, height);
-            var pixels = new Uint8Array(imageData.data.buffer);
-            const texture2d = new THREE.DataTexture2DArray(pixels, width, height, height / cell);
-            texture2d.format = THREE.RGBAFormat;
-            texture2d.type = THREE.UnsignedByteType;
-            texture2d.wrapS = THREE.RepeatWrapping;
-            texture2d.wrapT = THREE.RepeatWrapping;
-            texture2d.wrapT = THREE.RepeatWrapping;
-            resolve(texture2d);
-        })
-    });
+      var imageData = ctx.getImageData(0, 0, width, height);
+      var pixels = new Uint8Array(imageData.data.buffer);
+      const texture2d = new THREE.DataTexture2DArray(pixels, width, height, height / cell);
+      texture2d.format = THREE.RGBAFormat;
+      texture2d.type = THREE.UnsignedByteType;
+      texture2d.wrapS = THREE.RepeatWrapping;
+      texture2d.wrapT = THREE.RepeatWrapping;
+      texture2d.wrapT = THREE.RepeatWrapping;
+      texture2d.flipY = true;
+      resolve(texture2d);
+    })
+  });
 
 }
 
@@ -32,21 +33,24 @@ export function generateArrayTexture2D(width, height, cell = 16) {
 const grassTexture = textureLoader.load(`${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/grasslight-big.jpg`)
 const rockTexture = textureLoader.load(`${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/rock_boulder_dry_diff_1k.png`);
 
-const Idtech = new IDTech(512, 64);
-Idtech.loadAll();
+const IdtechBasic = new IDTech(512, 64);
+IdtechBasic.loadAll('textures/terrain/terrain ');
+const IdtechNormal = new IDTech(512, 64);
+debugger
+IdtechNormal.loadAll('textures/terrainnormal/terrain normal ');
 
 grassTexture.wrapS = THREE.RepeatWrapping;
 grassTexture.wrapT = THREE.RepeatWrapping;
 rockTexture.wrapS = THREE.RepeatWrapping;
 rockTexture.wrapT = THREE.RepeatWrapping;
 
-export const terrainMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff });
+export const terrainMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff/* , normalMap: grassNormalTexture  */ });
 
 terrainMaterial.onBeforeCompile = (shader, renderer) => {
-    shader.uniforms = shader.uniforms || {};
-    terrainMaterial.uniforms = shader.uniforms;
-    console.log('onBeforeCompile');
-    shader.vertexShader = `
+  shader.uniforms = shader.uniforms || {};
+  terrainMaterial.uniforms = shader.uniforms;
+  console.log('onBeforeCompile');
+  shader.vertexShader = `
 #define PHONG
 varying vec3 vViewPosition;
 #include <common>
@@ -92,6 +96,7 @@ void main() {
     vViewPosition = - mvPosition.xyz;
     #include <worldpos_vertex>
     #if defined(USE_TRIPLANETEXTURE)
+      
         vbiome0 = biome.x;
         vbiome1 = biome.y;
         biomeAmount = biome.z;
@@ -109,8 +114,8 @@ void main() {
     #include <shadowmap_vertex>
     #include <fog_vertex>
 }`;
-    shader.fragmentShader =
-        `
+  shader.fragmentShader =
+    `
 #define PHONG
 uniform vec3 diffuse;
 uniform vec3 emissive;
@@ -146,6 +151,7 @@ uniform float opacity;
 #ifdef USE_TRIPLANETEXTURE
     precision highp sampler2DArray;
     uniform sampler2DArray terrainArrayTexture;
+    uniform sampler2DArray terrainNormalArrayTexture ;
 
     flat in float vbiome0;
     flat in float vbiome1;
@@ -153,6 +159,7 @@ uniform float opacity;
     in float fbiome0;
     in vec3 vtriCoord;
     in vec3 vtriNormal;
+ 
 #endif
 void main() {
     #include <clipping_planes_fragment>
@@ -169,14 +176,14 @@ void main() {
     blending /= b;
 
     vec4 xaxis,yaxis,zaxis;
-    xaxis = texture(terrainArrayTexture, vec3(vtriCoord.yz*0.04, vbiome0));
-    yaxis = texture(terrainArrayTexture, vec3(vtriCoord.xz*0.04, vbiome0));
-    zaxis = texture(terrainArrayTexture, vec3(vtriCoord.xy*0.04, vbiome0));
+    xaxis = texture(terrainArrayTexture, vec3(vtriCoord.yz*0.2, vbiome0));
+    yaxis = texture(terrainArrayTexture, vec3(vtriCoord.xz*0.2, vbiome0));
+    zaxis = texture(terrainArrayTexture, vec3(vtriCoord.xy*0.2, vbiome0));
     vec4 biome0Color= xaxis * blending.x + yaxis * blending.y + zaxis * blending.z;
 
-    xaxis = texture(terrainArrayTexture, vec3(vtriCoord.yz*0.04, vbiome1));
-    yaxis = texture(terrainArrayTexture, vec3(vtriCoord.xz*0.04, vbiome1));
-    zaxis = texture(terrainArrayTexture, vec3(vtriCoord.xy*0.04, vbiome1));
+    xaxis = texture(terrainArrayTexture, vec3(vtriCoord.yz*0.2, vbiome1));
+    yaxis = texture(terrainArrayTexture, vec3(vtriCoord.xz*0.2, vbiome1));
+    zaxis = texture(terrainArrayTexture, vec3(vtriCoord.xy*0.2, vbiome1));
     vec4 biome1Color= xaxis * blending.x + yaxis * blending.y + zaxis * blending.z;
 
     vec4 terrainColor = biomeAmount * biome0Color + (1.0 - biomeAmount) * biome1Color;
@@ -184,7 +191,7 @@ void main() {
         terrainColor = 0.5 * biome0Color+ 0.5 * biome1Color;
     }
 
-    diffuseColor  *= terrainColor;
+    diffuseColor *= terrainColor;
 
     #endif
     #include <color_fragment>
@@ -192,7 +199,34 @@ void main() {
     #include <alphatest_fragment>
     #include <specularmap_fragment>
     #include <normal_fragment_begin>
-    #include <normal_fragment_maps>
+    // #include <normal_fragment_maps> 
+    #ifdef USE_TRIPLANETEXTURE    
+        // Triplanar uvs
+        vec2 uvX = vtriCoord.zy*0.2; // x facing plane
+        vec2 uvY = vtriCoord.xz*0.2; // y facing plane
+        vec2 uvZ = vtriCoord.xy*0.2; // z facing plane
+        // Tangent space normal maps
+        vec3 tnormalX = texture(terrainNormalArrayTexture, vec3(uvX, vbiome0)).xyz*2.0-1.0;
+        vec3 tnormalY = texture(terrainNormalArrayTexture, vec3(uvY, vbiome0)).xyz*2.0-1.0;
+        vec3 tnormalZ = texture(terrainNormalArrayTexture, vec3(uvZ, vbiome0)).xyz*2.0-1.0;
+        vec3 normalX = vec3(0.0, tnormalX.yx);
+        vec3 normalY = vec3(tnormalY.x, 0.0, tnormalY.y);
+        vec3 normalZ = vec3(tnormalZ.xy, 0.0);  
+        vec3 normal0 =  normalize(normalX * blending.x +normalY * blending.y +normalZ * blending.z+normal);
+
+        tnormalX = texture(terrainNormalArrayTexture, vec3(uvX, vbiome1)).xyz*2.0-1.0;
+        tnormalY = texture(terrainNormalArrayTexture, vec3(uvY, vbiome1)).xyz*2.0-1.0;
+        tnormalZ = texture(terrainNormalArrayTexture, vec3(uvZ, vbiome1)).xyz*2.0-1.0;
+        normalX = vec3(0.0, tnormalX.yx);
+        normalY = vec3(tnormalY.x, 0.0, tnormalY.y);
+        normalZ = vec3(tnormalZ.xy, 0.0);  
+        vec3 normal1 = normalize(normalX * blending.x +normalY * blending.y +normalZ * blending.z+normal);
+ 
+        normal = normalize(biomeAmount * normal0 + (1.0 - biomeAmount) * normal1);
+        if (abs(fbiome0 - vbiome0) > 0.01) {
+          normal =normalize(0.5 * normal0+ 0.5 * normal1);
+        }  
+    #endif
     #include <emissivemap_fragment>
     #include <lights_phong_fragment>
     #include <lights_fragment_begin>
@@ -209,8 +243,9 @@ void main() {
     #include <dithering_fragment>
 }`  ;
 
-    shader.defines = shader.defines || {};
-    shader.uniforms.terrainArrayTexture = { value: Idtech.texture };
+  shader.defines = shader.defines || {};
+  shader.uniforms.terrainArrayTexture = { value: IdtechBasic.texture };
+  shader.uniforms.terrainNormalArrayTexture = { value: IdtechNormal.texture };
 
-    shader.defines['USE_TRIPLANETEXTURE'] = '';
+  shader.defines['USE_TRIPLANETEXTURE'] = '';
 }

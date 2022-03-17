@@ -19,17 +19,16 @@ export class IDTech {
         this.loadDic = {};
     }
 
-    loadAll() {
+    loadAll(basicPath) {
         if (!this.imageLoader)
             this.imageLoader = new THREE.ImageLoader();
         for (let i = 0; i < this.count; i++) {
             const id = i;
-            const url = `${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/textures/terrain/terrain (${id + 1}).jpg`
+            const url = `${import.meta.url.replace(/(\/)[^\/]*$/, '$1')}/${basicPath}(${id + 1}).jpg`
             if (this.loadDic[id])
                 return;
 
             this.imageLoader.load(url, (image) => {
-                console.log('load finish ' + url)
                 this.ctx.drawImage(image, 0, 0, this.width, this.width);
                 const imageData = this.ctx.getImageData(0, 0, this.width, this.width);
                 const offset = id * this.width * this.width * 4;
@@ -37,7 +36,10 @@ export class IDTech {
                 this.data.set(new Uint8Array(imageData.data.buffer), offset);
                 this.texture.needsUpdate = true;
                 this.loadDic[id] = true;
-            })
+            }, undefined, () => {
+                
+             });
+
         }
     }
 
